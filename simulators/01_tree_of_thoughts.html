@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tree of Thoughts (ToT) Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 {
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 1.1em;
+        }
+        .concept-box {
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .concept-box h3 {
+            color: #00d9ff;
+            margin-bottom: 10px;
+        }
+        .concept-box ul {
+            margin-left: 20px;
+        }
+        .concept-box li {
+            margin: 5px 0;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        .controls {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00d9ff;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #00d9ff, #0099cc);
+            color: #000;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.4);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .visualization {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            min-height: 500px;
+        }
+        #tree-canvas {
+            width: 100%;
+            height: 400px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: auto;
+            position: relative;
+        }
+        .tree-node {
+            position: absolute;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+            min-width: 80px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .tree-node:hover {
+            transform: scale(1.1);
+            z-index: 100;
+        }
+        .tree-node.root {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .tree-node.exploring {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+        .tree-node.evaluated {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        .tree-node.solution {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            border-color: #fff;
+            box-shadow: 0 0 20px rgba(67, 233, 123, 0.5);
+        }
+        .tree-node.pruned {
+            background: rgba(255,255,255,0.1);
+            opacity: 0.5;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(240, 147, 251, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(240, 147, 251, 0.8); }
+        }
+        .tree-edge {
+            position: absolute;
+            background: rgba(255,255,255,0.3);
+            height: 2px;
+            transform-origin: left center;
+            pointer-events: none;
+        }
+        .log-panel {
+            margin-top: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .log-entry.thought { color: #f093fb; }
+        .log-entry.eval { color: #4facfe; }
+        .log-entry.solution { color: #43e97b; font-weight: bold; }
+        .log-entry.backtrack { color: #ff6b6b; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .stat-box {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d9ff;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .legend {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Tree of Thoughts (ToT) Simulator</h1>
+            <p class="subtitle">Exploring Multiple Reasoning Paths with Tree Search</p>
+        </header>
+
+        <div class="concept-box">
+            <h3>Concept from "Agentic Reasoning" Survey (Pages 11-12)</h3>
+            <p>Tree-of-Thoughts extends Chain-of-Thought by exploring multiple reasoning paths simultaneously:</p>
+            <ul>
+                <li><strong>Thought Generation:</strong> Generate multiple candidate next-steps at each node</li>
+                <li><strong>State Evaluation:</strong> Score each path's promise of reaching the goal</li>
+                <li><strong>Tree Search:</strong> BFS explores breadth-first, DFS goes deep first, Beam keeps top-k</li>
+                <li><strong>Backtracking:</strong> Abandon unpromising paths and try alternatives</li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Problem: Make 24</label>
+                    <input type="text" id="numbers" value="2, 3, 4, 6" placeholder="Enter 4 numbers">
+                </div>
+                <div class="control-group">
+                    <label>Target</label>
+                    <input type="number" id="target" value="24">
+                </div>
+                <div class="control-group">
+                    <label>Search Strategy</label>
+                    <select id="strategy">
+                        <option value="bfs">Breadth-First Search (BFS)</option>
+                        <option value="dfs">Depth-First Search (DFS)</option>
+                        <option value="beam" selected>Beam Search</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Beam Width (for Beam Search)</label>
+                    <input type="number" id="beamWidth" value="3" min="1" max="5">
+                </div>
+                <div class="control-group">
+                    <label>Animation Speed (ms)</label>
+                    <input type="range" id="speed" min="100" max="2000" value="500">
+                </div>
+                <button class="btn-primary" onclick="startSearch()">Start Search</button>
+                <button class="btn-secondary" onclick="stepSearch()">Step</button>
+                <button class="btn-secondary" onclick="resetSearch()">Reset</button>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="nodesExplored">0</div>
+                        <div class="stat-label">Explored</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="currentDepth">0</div>
+                        <div class="stat-label">Depth</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="bestScore">0.00</div>
+                        <div class="stat-label">Best Score</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visualization">
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>Root</div>
+                    <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #f093fb, #f5576c);"></div>Exploring</div>
+                    <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #4facfe, #00f2fe);"></div>Evaluated</div>
+                    <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #43e97b, #38f9d7);"></div>Solution</div>
+                    <div class="legend-item"><div class="legend-color" style="background: rgba(255,255,255,0.1);"></div>Pruned</div>
+                </div>
+                <div id="tree-canvas"></div>
+                <div class="log-panel" id="log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tree of Thoughts Simulator
+        class ToTSimulator {
+            constructor() {
+                this.nodes = [];
+                this.edges = [];
+                this.nodeId = 0;
+                this.explored = 0;
+                this.running = false;
+                this.solution = null;
+                this.frontier = [];
+            }
+
+            reset() {
+                this.nodes = [];
+                this.edges = [];
+                this.nodeId = 0;
+                this.explored = 0;
+                this.running = false;
+                this.solution = null;
+                this.frontier = [];
+                document.getElementById('tree-canvas').innerHTML = '';
+                document.getElementById('log').innerHTML = '';
+                this.updateStats();
+            }
+
+            parseNumbers() {
+                const input = document.getElementById('numbers').value;
+                return input.split(',').map(n => parseFloat(n.trim())).filter(n => !isNaN(n));
+            }
+
+            getTarget() {
+                return parseFloat(document.getElementById('target').value) || 24;
+            }
+
+            evaluateState(numbers, target) {
+                if (numbers.length === 1 && Math.abs(numbers[0] - target) < 0.001) return 1.0;
+                if (numbers.length === 0) return 0;
+                const minDist = Math.min(...numbers.map(n => Math.abs(n - target)));
+                const distScore = Math.max(0, 1 - minDist / (target + 1));
+                const progressScore = (4 - numbers.length) / 3;
+                return 0.6 * distScore + 0.4 * progressScore;
+            }
+
+            generateThoughts(numbers, target) {
+                if (numbers.length < 2) return [];
+                const thoughts = [];
+                const ops = [
+                    ['+', (a, b) => a + b],
+                    ['-', (a, b) => a - b],
+                    ['*', (a, b) => a * b],
+                    ['/', (a, b) => b !== 0 ? a / b : null]
+                ];
+
+                for (let i = 0; i < numbers.length; i++) {
+                    for (let j = 0; j < numbers.length; j++) {
+                        if (i === j) continue;
+                        for (const [sym, fn] of ops) {
+                            const result = fn(numbers[i], numbers[j]);
+                            if (result === null || Math.abs(result) > 1000) continue;
+                            const newNums = numbers.filter((_, idx) => idx !== i && idx !== j);
+                            newNums.push(Math.round(result * 1000) / 1000);
+                            thoughts.push({
+                                expression: `${numbers[i]} ${sym} ${numbers[j]} = ${result.toFixed(2)}`,
+                                state: newNums.sort((a, b) => a - b),
+                                score: this.evaluateState(newNums, target)
+                            });
+                        }
+                    }
+                }
+                return thoughts.sort((a, b) => b.score - a.score).slice(0, 4);
+            }
+
+            createNode(thought, state, score, parent, depth) {
+                const id = this.nodeId++;
+                const isSolution = state.length === 1 && Math.abs(state[0] - this.getTarget()) < 0.001;
+                const node = { id, thought, state, score, parent, depth, children: [], status: 'pending', isSolution };
+                this.nodes.push(node);
+                if (parent !== null) {
+                    const parentNode = this.nodes.find(n => n.id === parent);
+                    if (parentNode) parentNode.children.push(id);
+                    this.edges.push({ from: parent, to: id });
+                }
+                return node;
+            }
+
+            renderTree() {
+                const canvas = document.getElementById('tree-canvas');
+                canvas.innerHTML = '';
+
+                // Calculate positions
+                const levelNodes = {};
+                this.nodes.forEach(n => {
+                    if (!levelNodes[n.depth]) levelNodes[n.depth] = [];
+                    levelNodes[n.depth].push(n);
+                });
+
+                const canvasWidth = canvas.clientWidth || 800;
+                this.nodes.forEach(node => {
+                    const level = levelNodes[node.depth];
+                    const idx = level.indexOf(node);
+                    const spacing = canvasWidth / (level.length + 1);
+                    node.x = spacing * (idx + 1);
+                    node.y = 30 + node.depth * 80;
+                });
+
+                // Draw edges
+                this.edges.forEach(edge => {
+                    const from = this.nodes.find(n => n.id === edge.from);
+                    const to = this.nodes.find(n => n.id === edge.to);
+                    if (from && to) {
+                        const dx = to.x - from.x;
+                        const dy = to.y - from.y;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                        const edgeEl = document.createElement('div');
+                        edgeEl.className = 'tree-edge';
+                        edgeEl.style.left = from.x + 'px';
+                        edgeEl.style.top = (from.y + 15) + 'px';
+                        edgeEl.style.width = length + 'px';
+                        edgeEl.style.transform = `rotate(${angle}deg)`;
+                        canvas.appendChild(edgeEl);
+                    }
+                });
+
+                // Draw nodes
+                this.nodes.forEach(node => {
+                    const el = document.createElement('div');
+                    el.className = `tree-node ${node.status}`;
+                    if (node.isSolution) el.classList.add('solution');
+                    if (node.depth === 0) el.classList.add('root');
+
+                    el.style.left = (node.x - 40) + 'px';
+                    el.style.top = node.y + 'px';
+                    el.innerHTML = `<div>${node.state.map(n => n.toFixed(1)).join(', ')}</div>
+                                   <div style="font-size:10px;opacity:0.8">${node.score.toFixed(2)}</div>`;
+                    el.title = node.thought;
+                    canvas.appendChild(el);
+                });
+            }
+
+            log(message, type = '') {
+                const logEl = document.getElementById('log');
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = message;
+                logEl.appendChild(entry);
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+
+            updateStats() {
+                document.getElementById('nodesExplored').textContent = this.explored;
+                document.getElementById('currentDepth').textContent = Math.max(...this.nodes.map(n => n.depth), 0);
+                const best = Math.max(...this.nodes.map(n => n.score), 0);
+                document.getElementById('bestScore').textContent = best.toFixed(2);
+            }
+
+            async step() {
+                const strategy = document.getElementById('strategy').value;
+                const target = this.getTarget();
+                const beamWidth = parseInt(document.getElementById('beamWidth').value) || 3;
+
+                if (this.frontier.length === 0) {
+                    if (this.nodes.length === 0) {
+                        // Initialize
+                        const numbers = this.parseNumbers();
+                        const root = this.createNode('Start', numbers, this.evaluateState(numbers, target), null, 0);
+                        root.status = 'exploring';
+                        this.frontier.push(root);
+                        this.log(`Starting with numbers: [${numbers.join(', ')}]`, 'thought');
+                    } else {
+                        this.log('Search complete!', 'solution');
+                        return false;
+                    }
+                }
+
+                // Get next node to expand based on strategy
+                let current;
+                if (strategy === 'bfs') {
+                    current = this.frontier.shift();
+                } else if (strategy === 'dfs') {
+                    current = this.frontier.pop();
+                } else { // beam
+                    this.frontier.sort((a, b) => b.score - a.score);
+                    this.frontier = this.frontier.slice(0, beamWidth);
+                    current = this.frontier.shift();
+                }
+
+                if (!current) return false;
+
+                current.status = 'exploring';
+                this.explored++;
+                this.log(`Exploring: [${current.state.join(', ')}] (score: ${current.score.toFixed(2)})`, 'eval');
+                this.renderTree();
+
+                await this.delay(100);
+
+                if (current.isSolution) {
+                    current.status = 'solution';
+                    this.solution = current;
+                    this.log(`SOLUTION FOUND! ${current.thought}`, 'solution');
+                    this.renderTree();
+                    return false;
+                }
+
+                if (current.depth >= 4 || current.state.length < 2) {
+                    current.status = 'pruned';
+                    this.log(`Dead end at depth ${current.depth}`, 'backtrack');
+                    this.renderTree();
+                    return true;
+                }
+
+                const thoughts = this.generateThoughts(current.state, target);
+                current.status = 'evaluated';
+
+                for (const thought of thoughts) {
+                    const child = this.createNode(thought.expression, thought.state, thought.score, current.id, current.depth + 1);
+                    this.frontier.push(child);
+                    this.log(`  Generated: ${thought.expression}`, 'thought');
+                }
+
+                this.renderTree();
+                this.updateStats();
+                return true;
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            async run() {
+                this.running = true;
+                const speed = parseInt(document.getElementById('speed').value) || 500;
+
+                while (this.running && await this.step()) {
+                    await this.delay(speed);
+                }
+                this.running = false;
+            }
+
+            stop() {
+                this.running = false;
+            }
+        }
+
+        const simulator = new ToTSimulator();
+
+        function startSearch() {
+            if (simulator.running) {
+                simulator.stop();
+            } else {
+                simulator.reset();
+                simulator.run();
+            }
+        }
+
+        function stepSearch() {
+            simulator.step();
+        }
+
+        function resetSearch() {
+            simulator.stop();
+            simulator.reset();
+        }
+    </script>
+</body>
+</html>

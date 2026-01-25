@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Reasoning for LLMs - Study Guide</title>
+    <style>
+        :root {
+            --bg: #fefefe;
+            --bg-secondary: #f8f9fa;
+            --text: #1a1a1a;
+            --text-secondary: #555;
+            --text-muted: #888;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border: #e5e5e5;
+            --radius: 12px;
+            --font-serif: 'Georgia', 'Times New Roman', serif;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-family: var(--font-serif);
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+
+        .hero .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 25px;
+        }
+
+        .hero .meta {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            font-size: 0.95em;
+            opacity: 0.85;
+        }
+
+        .hero .meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-header h2 {
+            font-family: var(--font-serif);
+            font-size: 1.6em;
+            font-weight: 400;
+        }
+
+        .section-header .badge {
+            background: var(--accent);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        /* TOC for Paper */
+        .toc-section {
+            margin-bottom: 50px;
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .toc-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .toc-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.1);
+        }
+
+        .toc-card h3 {
+            font-family: var(--font-serif);
+            font-size: 1.15em;
+            margin-bottom: 8px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toc-card h3 .icon {
+            font-size: 1.3em;
+        }
+
+        .toc-card p {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .toc-card .topics {
+            list-style: none;
+        }
+
+        .toc-card .topics li {
+            margin-bottom: 6px;
+        }
+
+        .toc-card .topics a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.9em;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .toc-card .topics a:hover {
+            background: white;
+            color: var(--accent);
+        }
+
+        .toc-card .topics a .page-num {
+            color: var(--text-muted);
+            font-size: 0.85em;
+            min-width: 35px;
+        }
+
+        .view-all {
+            display: inline-block;
+            margin-top: 12px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .view-all:hover {
+            text-decoration: underline;
+        }
+
+        /* Simulators */
+        .simulators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .sim-card {
+            display: block;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+        }
+
+        .sim-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
+        }
+
+        .sim-card .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .sim-card .icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .sim-card:nth-child(2) .icon { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        .sim-card:nth-child(3) .icon { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+        .sim-card:nth-child(4) .icon { background: linear-gradient(135deg, #059669, #047857); }
+        .sim-card:nth-child(5) .icon { background: linear-gradient(135deg, #ea580c, #c2410c); }
+        .sim-card:nth-child(6) .icon { background: linear-gradient(135deg, #0284c7, #0369a1); }
+        .sim-card:nth-child(7) .icon { background: linear-gradient(135deg, #be185d, #9d174d); }
+
+        .sim-card h3 {
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .sim-card .pages {
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+
+        .sim-card p {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .sim-card .tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .sim-card .tag {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            color: var(--text-muted);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .quick-btn.primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .quick-btn.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .quick-btn.secondary {
+            background: white;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .quick-btn.secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>Agentic Reasoning for Large Language Models</h1>
+        <p class="subtitle">Foundations &middot; Evolution &middot; Collaboration</p>
+        <div class="meta">
+            <span>📄 135 Pages</span>
+            <span>🎮 7 Simulators</span>
+            <span>📚 arXiv: 2501.12538</span>
+        </div>
+        <div class="quick-actions">
+            <a href="reader.html" class="quick-btn primary">📖 Read Full Paper</a>
+            <a href="#simulators" class="quick-btn secondary">🎮 Try Simulators</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Paper Table of Contents -->
+        <section class="toc-section">
+            <div class="section-header">
+                <h2>📄 Paper Contents</h2>
+                <span class="badge">135 Pages</span>
+            </div>
+
+            <div class="toc-grid">
+                <!-- Introduction -->
+                <div class="toc-card">
+                    <h3><span class="icon">📘</span> Introduction</h3>
+                    <p>Framework overview, definitions, and survey scope</p>
+                    <ul class="topics">
+                        <li><a href="reader.html#page=1"><span class="page-num">p.1</span> Title Page & Abstract</a></li>
+                        <li><a href="reader.html#page=2"><span class="page-num">p.2</span> Framework Overview (Figure 1)</a></li>
+                        <li><a href="reader.html#page=3"><span class="page-num">p.3</span> Definition of Agentic Reasoning</a></li>
+                        <li><a href="reader.html#page=8"><span class="page-num">p.8</span> POMDP Formalization</a></li>
+                    </ul>
+                    <a href="reader.html#page=1" class="view-all">View all (Pages 1-9) →</a>
+                </div>
+
+                <!-- Foundational -->
+                <div class="toc-card">
+                    <h3><span class="icon">🏗️</span> Foundational Reasoning</h3>
+                    <p>Planning, tool use, and search capabilities</p>
+                    <ul class="topics">
+                        <li><a href="reader.html#page=11"><span class="page-num">p.11</span> In-Context Planning (Figure 2)</a></li>
+                        <li><a href="reader.html#page=12"><span class="page-num">p.12</span> Planning Methods (Table 2)</a></li>
+                        <li><a href="reader.html#page=15"><span class="page-num">p.15</span> Tool-Use Systems (Figure 3)</a></li>
+                        <li><a href="reader.html#page=18"><span class="page-num">p.18</span> Agentic Search (Figure 4)</a></li>
+                    </ul>
+                    <a href="reader.html#page=10" class="view-all">View all (Pages 10-19) →</a>
+                </div>
+
+                <!-- Self-Evolving -->
+                <div class="toc-card">
+                    <h3><span class="icon">🔄</span> Self-Evolving Reasoning</h3>
+                    <p>Feedback mechanisms, memory, and adaptation</p>
+                    <ul class="topics">
+                        <li><a href="reader.html#page=21"><span class="page-num">p.21</span> Feedback Mechanisms (Figure 5)</a></li>
+                        <li><a href="reader.html#page=24"><span class="page-num">p.24</span> Agentic Memory (Figure 6)</a></li>
+                        <li><a href="reader.html#page=25"><span class="page-num">p.25</span> Memory Systems (Table 6)</a></li>
+                        <li><a href="reader.html#page=28"><span class="page-num">p.28</span> Evolving Capabilities (Figure 7)</a></li>
+                    </ul>
+                    <a href="reader.html#page=20" class="view-all">View all (Pages 20-29) →</a>
+                </div>
+
+                <!-- Multi-Agent -->
+                <div class="toc-card">
+                    <h3><span class="icon">👥</span> Multi-Agent Reasoning</h3>
+                    <p>Roles, collaboration, and collective intelligence</p>
+                    <ul class="topics">
+                        <li><a href="reader.html#page=30"><span class="page-num">p.30</span> Role Taxonomy (Figure 8)</a></li>
+                        <li><a href="reader.html#page=34"><span class="page-num">p.34</span> Collaboration Patterns (Figure 9)</a></li>
+                        <li><a href="reader.html#page=40"><span class="page-num">p.40</span> Multi-Agent Memory (Figure 10)</a></li>
+                        <li><a href="reader.html#page=42"><span class="page-num">p.42</span> Training Multi-Agent Systems</a></li>
+                    </ul>
+                    <a href="reader.html#page=30" class="view-all">View all (Pages 30-42) →</a>
+                </div>
+
+                <!-- Applications -->
+                <div class="toc-card">
+                    <h3><span class="icon">🚀</span> Applications</h3>
+                    <p>Math, code, science, healthcare, web agents</p>
+                    <ul class="topics">
+                        <li><a href="reader.html#page=43"><span class="page-num">p.43</span> Applications Overview (Figure 11)</a></li>
+                        <li><a href="reader.html#page=48"><span class="page-num">p.48</span> Scientific Discovery Agents</a></li>
+                        <li><a href="reader.html#page=55"><span class="page-num">p.55</span> Healthcare Agents</a></li>
+                        <li><a href="reader.html#page=58"><span class="page-num">p.58</span> Web Agents</a></li>
+                    </ul>
+                    <a href="reader.html#page=43" class="view-all">View all (Pages 43-63) →</a>
+                </div>
+
+                <!-- Benchmarks -->
+                <div class="toc-card">
+                    <h3><span class="icon">📊</span> Benchmarks & Future</h3>
+                    <p>Evaluation methods and open problems</p>
+                    <ul class="topics">
+                        <li><a href="reader.html#page=64"><span class="page-num">p.64</span> Benchmarks Introduction</a></li>
+                        <li><a href="reader.html#page=65"><span class="page-num">p.65</span> Tool Use Benchmarks (Figure 12)</a></li>
+                        <li><a href="reader.html#page=73"><span class="page-num">p.73</span> Open Problems</a></li>
+                        <li><a href="reader.html#page=74"><span class="page-num">p.74</span> Long-Horizon Challenges</a></li>
+                    </ul>
+                    <a href="reader.html#page=64" class="view-all">View all (Pages 64-74) →</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulators -->
+        <section id="simulators">
+            <div class="section-header">
+                <h2>🎮 Interactive Simulators</h2>
+                <span class="badge">7 Demos</span>
+            </div>
+
+            <div class="simulators-grid">
+                <a href="simulators/01_tree_of_thoughts.html" class="sim-card">
+                    <div class="header">
+                        <div class="icon">🌳</div>
+                        <div>
+                            <h3>Tree of Thoughts</h3>
+                            <span class="pages">Pages 11-12</span>
+                        </div>
+                    </div>
+                    <p>Explore multiple reasoning paths with BFS, DFS, and Beam Search</p>
+                    <div class="tags">
+                        <span class="tag">Planning</span>
+                        <span class="tag">Search</span>
+                    </div>
+                </a>
+
+                <a href="simulators/02_react_agent.html" class="sim-card">
+                    <div class="header">
+                        <div class="icon">⚡</div>
+                        <div>
+                            <h3>ReAct Agent</h3>
+                            <span class="pages">Pages 15, 18</span>
+                        </div>
+                    </div>
+                    <p>Thought-Action-Observation loop with tool invocation</p>
+                    <div class="tags">
+                        <span class="tag">Tool Use</span>
+                        <span class="tag">Reasoning</span>
+                    </div>
+                </a>
+
+                <a href="simulators/03_reflexion_feedback.html" class="sim-card">
+                    <div class="header">
+                        <div class="icon">🪞</div>
+                        <div>
+                            <h3>Reflexion Feedback</h3>
+                            <span class="pages">Pages 21, 23</span>
+                        </div>
+                    </div>
+                    <p>Generate-Critique-Revise loop for self-improvement</p>
+                    <div class="tags">
+                        <span class="tag">Self-Critique</span>
+                        <span class="tag">Memory</span>
+                    </div>
+                </a>
+
+                <a href="simulators/04_agentic_memory.html" class="sim-card">
+                    <div class="header">
+                        <div class="icon">🧠</div>
+                        <div>
+                            <h3>Agentic Memory</h3>
+                            <span class="pages">Pages 24-25</span>
+                        </div>
+                    </div>
+                    <p>Flat, graph, and hierarchical memory architectures</p>
+                    <div class="tags">
+                        <span class="tag">Memory</span>
+                        <span class="tag">Retrieval</span>
+                    </div>
+                </a>
+
+                <a href="simulators/05_multi_agent_collaboration.html" class="sim-card">
+                    <div class="header">
+                        <div class="icon">👥</div>
+                        <div>
+                            <h3>Multi-Agent Collaboration</h3>
+                            <span class="pages">Pages 30, 34</span>
+                        </div>
+                    </div>
+                    <p>Leader-Worker-Critic pattern with role coordination</p>
+                    <div class="tags">
+                        <span class="tag">Multi-Agent</span>
+                        <span class="tag">Roles</span>
+                    </div>
+                </a>
+
+                <a href="simulators/06_agentic_rag.html" class="sim-card">
+                    <div class="header">
+                        <div class="icon">🔍</div>
+                        <div>
+                            <h3>Agentic RAG</h3>
+                            <span class="pages">Pages 18-19</span>
+                        </div>
+                    </div>
+                    <p>Traditional vs agentic retrieval comparison</p>
+                    <div class="tags">
+                        <span class="tag">RAG</span>
+                        <span class="tag">Retrieval</span>
+                    </div>
+                </a>
+
+                <a href="simulators/07_pomdp_agent.html" class="sim-card">
+                    <div class="header">
+                        <div class="icon">🎯</div>
+                        <div>
+                            <h3>POMDP Agent</h3>
+                            <span class="pages">Page 8</span>
+                        </div>
+                    </div>
+                    <p>Think-then-Act under partial observability</p>
+                    <div class="tags">
+                        <span class="tag">POMDP</span>
+                        <span class="tag">Belief State</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>Interactive Study Guide for "Agentic Reasoning for Large Language Models"</p>
+        <p style="margin-top: 8px;">
+            <a href="https://arxiv.org/abs/2501.12538" target="_blank">arXiv Paper</a> &middot;
+            UIUC, Meta, Amazon, Google DeepMind
+        </p>
+    </footer>
+</body>
+</html>

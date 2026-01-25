@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReAct Agent Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 1.1em;
+        }
+        .concept-box {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .concept-box h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+        .controls {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ff6b6b;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 14px;
+        }
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .visualization {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .tools-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tool-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .tool-card.active {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.2);
+        }
+        .tool-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .tool-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .trace-panel {
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .trace-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .trace-step.thought {
+            background: rgba(255, 193, 7, 0.1);
+            border-color: #ffc107;
+        }
+        .trace-step.action {
+            background: rgba(255, 107, 107, 0.1);
+            border-color: #ff6b6b;
+        }
+        .trace-step.observation {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: #4caf50;
+        }
+        .trace-step.answer {
+            background: rgba(156, 39, 176, 0.1);
+            border-color: #9c27b0;
+        }
+        .step-label {
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .thought .step-label { color: #ffc107; }
+        .action .step-label { color: #ff6b6b; }
+        .observation .step-label { color: #4caf50; }
+        .answer .step-label { color: #9c27b0; }
+        .step-content {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            font-size: 11px;
+        }
+        .environment {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .env-title {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .env-state {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .env-item {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .env-item strong {
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ReAct Agent Simulator</h1>
+            <p class="subtitle">Reasoning + Acting: Interleaving Thought and Action</p>
+        </header>
+
+        <div class="concept-box">
+            <h3>Concept from "Agentic Reasoning" Survey (Pages 15, 18)</h3>
+            <p>ReAct (Reasoning + Acting) interleaves Chain-of-Thought reasoning with tool-use actions:</p>
+            <ul>
+                <li><strong>Thought:</strong> The agent reasons about what to do next</li>
+                <li><strong>Action:</strong> The agent invokes a tool (search, calculate, lookup)</li>
+                <li><strong>Observation:</strong> The agent receives the tool's output</li>
+                <li><strong>Loop:</strong> Repeat until the task is solved</li>
+            </ul>
+            <p style="margin-top:10px;"><em>"The foundation of in-context agentic reasoning lies in augmenting Chain-of-Thought with the ability to take action."</em></p>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Query / Task</label>
+                    <textarea id="query" placeholder="Enter a question...">What is the population of France divided by the area of Germany in square kilometers?</textarea>
+                </div>
+
+                <div class="control-group">
+                    <label>Max Iterations</label>
+                    <input type="number" id="maxIter" value="6" min="1" max="10">
+                </div>
+
+                <div class="control-group">
+                    <label>Animation Speed (ms)</label>
+                    <input type="range" id="speed" min="200" max="2000" value="800">
+                </div>
+
+                <button class="btn-primary" onclick="runAgent()">Run Agent</button>
+                <button class="btn-secondary" onclick="stepAgent()">Step</button>
+                <button class="btn-secondary" onclick="resetAgent()">Reset</button>
+
+                <div class="environment">
+                    <div class="env-title">Simulated Knowledge Base</div>
+                    <div class="env-state">
+                        <div class="env-item"><strong>France Pop:</strong> 67.75M</div>
+                        <div class="env-item"><strong>Germany Area:</strong> 357,386 km²</div>
+                        <div class="env-item"><strong>UK Pop:</strong> 67.33M</div>
+                        <div class="env-item"><strong>Spain Area:</strong> 505,990 km²</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visualization">
+                <h3 style="margin-bottom:15px; color:#ff6b6b;">Available Tools</h3>
+                <div class="tools-panel">
+                    <div class="tool-card" id="tool-search">
+                        <div class="tool-icon">🔍</div>
+                        <div class="tool-name">Search</div>
+                        <div style="font-size:11px;color:#888;margin-top:4px">Look up facts</div>
+                    </div>
+                    <div class="tool-card" id="tool-calculate">
+                        <div class="tool-icon">🧮</div>
+                        <div class="tool-name">Calculate</div>
+                        <div style="font-size:11px;color:#888;margin-top:4px">Math operations</div>
+                    </div>
+                    <div class="tool-card" id="tool-lookup">
+                        <div class="tool-icon">📊</div>
+                        <div class="tool-name">Lookup</div>
+                        <div style="font-size:11px;color:#888;margin-top:4px">Database query</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom:15px; color:#ff6b6b;">Reasoning Trace</h3>
+                <div class="trace-panel" id="trace"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulated knowledge base
+        const knowledgeBase = {
+            'population of france': { value: 67750000, unit: 'people', source: 'World Bank 2023' },
+            'population of germany': { value: 83200000, unit: 'people', source: 'World Bank 2023' },
+            'population of uk': { value: 67330000, unit: 'people', source: 'World Bank 2023' },
+            'population of spain': { value: 47420000, unit: 'people', source: 'World Bank 2023' },
+            'area of france': { value: 643801, unit: 'km²', source: 'CIA Factbook' },
+            'area of germany': { value: 357386, unit: 'km²', source: 'CIA Factbook' },
+            'area of uk': { value: 243610, unit: 'km²', source: 'CIA Factbook' },
+            'area of spain': { value: 505990, unit: 'km²', source: 'CIA Factbook' },
+            'capital of france': { value: 'Paris', unit: '', source: 'Encyclopedia' },
+            'capital of germany': { value: 'Berlin', unit: '', source: 'Encyclopedia' },
+        };
+
+        class ReActAgent {
+            constructor() {
+                this.trace = [];
+                this.stepNum = 0;
+                this.state = {};
+                this.running = false;
+                this.finished = false;
+            }
+
+            reset() {
+                this.trace = [];
+                this.stepNum = 0;
+                this.state = {};
+                this.running = false;
+                this.finished = false;
+                document.getElementById('trace').innerHTML = '';
+                this.clearToolHighlights();
+            }
+
+            clearToolHighlights() {
+                document.querySelectorAll('.tool-card').forEach(el => el.classList.remove('active'));
+            }
+
+            highlightTool(toolName) {
+                this.clearToolHighlights();
+                const toolEl = document.getElementById(`tool-${toolName.toLowerCase()}`);
+                if (toolEl) toolEl.classList.add('active');
+            }
+
+            addTraceStep(type, content) {
+                this.stepNum++;
+                const traceEl = document.getElementById('trace');
+                const stepEl = document.createElement('div');
+                stepEl.className = `trace-step ${type}`;
+
+                const icons = {
+                    thought: '💭',
+                    action: '⚡',
+                    observation: '👁️',
+                    answer: '✅'
+                };
+
+                stepEl.innerHTML = `
+                    <div class="step-label">
+                        <span class="step-number">${this.stepNum}</span>
+                        ${icons[type]} ${type.toUpperCase()}
+                    </div>
+                    <div class="step-content">${content}</div>
+                `;
+                traceEl.appendChild(stepEl);
+                traceEl.scrollTop = traceEl.scrollHeight;
+
+                this.trace.push({ type, content, step: this.stepNum });
+            }
+
+            // Simulated tool execution
+            executeTool(toolName, query) {
+                this.highlightTool(toolName);
+
+                if (toolName === 'search' || toolName === 'lookup') {
+                    const normalizedQuery = query.toLowerCase().trim();
+                    for (const [key, data] of Object.entries(knowledgeBase)) {
+                        if (normalizedQuery.includes(key)) {
+                            return `Found: ${data.value.toLocaleString()} ${data.unit} (Source: ${data.source})`;
+                        }
+                    }
+                    return `No results found for "${query}"`;
+                }
+
+                if (toolName === 'calculate') {
+                    try {
+                        // Extract numbers from state and perform calculation
+                        const numbers = Object.values(this.state).filter(v => typeof v === 'number');
+                        if (query.includes('divide') || query.includes('/')) {
+                            if (numbers.length >= 2) {
+                                const result = numbers[0] / numbers[1];
+                                return `Result: ${result.toFixed(4)} (${numbers[0].toLocaleString()} / ${numbers[1].toLocaleString()})`;
+                            }
+                        }
+                        // Try to evaluate simple expressions
+                        const match = query.match(/[\d.]+\s*[+\-*/]\s*[\d.]+/);
+                        if (match) {
+                            const result = eval(match[0]);
+                            return `Result: ${result.toFixed(4)}`;
+                        }
+                        return `Calculated using stored values: ${numbers.join(', ')}`;
+                    } catch (e) {
+                        return `Error in calculation: ${e.message}`;
+                    }
+                }
+
+                return `Tool ${toolName} not recognized`;
+            }
+
+            // Simulated LLM reasoning (rule-based for demonstration)
+            generateThought(query, iteration) {
+                const thoughts = [
+                    `I need to break down this question. It asks about population of France and area of Germany.`,
+                    `I found the population of France. Now I need to find the area of Germany.`,
+                    `I have both values now. I need to perform the division calculation.`,
+                    `Let me verify my calculation and formulate the final answer.`
+                ];
+
+                if (this.state.population_france && !this.state.area_germany) {
+                    return `I have the population of France (${this.state.population_france.toLocaleString()}). Now I need to find the area of Germany to complete the division.`;
+                }
+                if (this.state.population_france && this.state.area_germany && !this.state.result) {
+                    return `I have both values: France population = ${this.state.population_france.toLocaleString()} and Germany area = ${this.state.area_germany.toLocaleString()} km². Now I can calculate the division.`;
+                }
+                if (this.state.result) {
+                    return `I have calculated the result. The answer is ${this.state.result.toFixed(4)} people per km².`;
+                }
+
+                return thoughts[Math.min(iteration, thoughts.length - 1)];
+            }
+
+            generateAction(query, iteration) {
+                if (!this.state.population_france) {
+                    return { tool: 'Search', query: 'population of France' };
+                }
+                if (!this.state.area_germany) {
+                    return { tool: 'Search', query: 'area of Germany' };
+                }
+                if (!this.state.result) {
+                    return { tool: 'Calculate', query: `divide ${this.state.population_france} by ${this.state.area_germany}` };
+                }
+                return null;
+            }
+
+            processObservation(observation) {
+                // Extract numbers from observation
+                const numMatch = observation.match(/[\d,]+(?:\.\d+)?/);
+                if (numMatch) {
+                    const num = parseFloat(numMatch[0].replace(/,/g, ''));
+                    if (observation.toLowerCase().includes('population') && observation.toLowerCase().includes('france')) {
+                        this.state.population_france = num;
+                    } else if (observation.toLowerCase().includes('km')) {
+                        this.state.area_germany = num;
+                    } else if (observation.toLowerCase().includes('result')) {
+                        this.state.result = num;
+                    }
+                }
+            }
+
+            async step() {
+                if (this.finished) return false;
+
+                const query = document.getElementById('query').value;
+                const iteration = Math.floor(this.trace.length / 3);
+
+                // Generate Thought
+                const thought = this.generateThought(query, iteration);
+                this.addTraceStep('thought', thought);
+                await this.delay(300);
+
+                // Check if we have the answer
+                if (this.state.result) {
+                    this.addTraceStep('answer', `The population of France divided by the area of Germany is approximately <strong>${this.state.result.toFixed(2)}</strong> people per square kilometer.`);
+                    this.finished = true;
+                    this.clearToolHighlights();
+                    return false;
+                }
+
+                // Generate Action
+                const action = this.generateAction(query, iteration);
+                if (!action) {
+                    this.finished = true;
+                    return false;
+                }
+
+                this.addTraceStep('action', `${action.tool}["${action.query}"]`);
+                await this.delay(300);
+
+                // Execute tool and get observation
+                const observation = this.executeTool(action.tool.toLowerCase(), action.query);
+                this.addTraceStep('observation', observation);
+                this.processObservation(observation);
+
+                await this.delay(200);
+                this.clearToolHighlights();
+
+                return true;
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            async run() {
+                this.running = true;
+                const maxIter = parseInt(document.getElementById('maxIter').value) || 6;
+                const speed = parseInt(document.getElementById('speed').value) || 800;
+
+                let iterations = 0;
+                while (this.running && !this.finished && iterations < maxIter) {
+                    await this.step();
+                    await this.delay(speed);
+                    iterations++;
+                }
+
+                if (!this.finished && iterations >= maxIter) {
+                    this.addTraceStep('thought', 'Maximum iterations reached. Unable to complete the task.');
+                }
+
+                this.running = false;
+            }
+
+            stop() {
+                this.running = false;
+            }
+        }
+
+        const agent = new ReActAgent();
+
+        function runAgent() {
+            if (agent.running) {
+                agent.stop();
+            } else {
+                agent.reset();
+                agent.run();
+            }
+        }
+
+        function stepAgent() {
+            agent.step();
+        }
+
+        function resetAgent() {
+            agent.stop();
+            agent.reset();
+        }
+    </script>
+</body>
+</html>

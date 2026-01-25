@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POMDP Agent Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 {
+            color: #e94560;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 1.1em;
+        }
+        .concept-box {
+            background: rgba(233, 69, 96, 0.1);
+            border: 1px solid rgba(233, 69, 96, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .concept-box h3 {
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+        .formula-box {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+        }
+        .controls {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #e94560;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #c73659);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .visualization {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .world-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .grid-cell {
+            aspect-ratio: 1;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .grid-cell.agent {
+            border-color: #e94560;
+            background: rgba(233, 69, 96, 0.2);
+        }
+        .grid-cell.goal {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.2);
+        }
+        .grid-cell.obstacle {
+            background: rgba(100, 100, 100, 0.5);
+        }
+        .grid-cell.fog {
+            background: rgba(0,0,0,0.6);
+        }
+        .cell-belief {
+            position: absolute;
+            bottom: 4px;
+            font-size: 10px;
+            color: #888;
+        }
+        .belief-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(233, 69, 96, 0.3);
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+        .belief-fill {
+            height: 100%;
+            background: #e94560;
+            transition: width 0.3s;
+        }
+        .panels-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+        }
+        .panel-title {
+            font-weight: 600;
+            color: #e94560;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .trace-entry {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .trace-step {
+            background: #e94560;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .trace-content {
+            flex: 1;
+        }
+        .trace-type {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .trace-type.think { color: #fbbf24; }
+        .trace-type.act { color: #e94560; }
+        .trace-type.observe { color: #22c55e; }
+        .belief-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+        }
+        .belief-cell {
+            aspect-ratio: 1;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #e94560;
+        }
+        .belief-cell.high {
+            background: rgba(233, 69, 96, 0.6);
+            color: #fff;
+        }
+        .belief-cell.medium {
+            background: rgba(233, 69, 96, 0.3);
+        }
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .action-btn {
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            background: rgba(233, 69, 96, 0.3);
+            border-color: #e94560;
+        }
+        .action-btn:nth-child(2) { grid-column: 2; }
+        .action-btn:nth-child(3) { grid-column: 2; }
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .stat-box {
+            background: rgba(0,0,0,0.3);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #e94560;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .policy-diagram {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .policy-formula {
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            color: #fbbf24;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>POMDP Agent Simulator</h1>
+            <p class="subtitle">Partially Observable Markov Decision Process - Think then Act</p>
+        </header>
+
+        <div class="concept-box">
+            <h3>Concept from "Agentic Reasoning" Survey (Page 8)</h3>
+            <p>Agentic reasoning is formalized as a POMDP with explicit reasoning traces:</p>
+            <div class="formula-box">
+                π(z, a | h) = π_reason(z | h) · π_act(a | h, z)
+            </div>
+            <ul>
+                <li><strong>Partial Observability:</strong> Agent cannot see full environment state, only observations</li>
+                <li><strong>Belief State:</strong> Probability distribution over possible true states</li>
+                <li><strong>Reasoning (Z):</strong> Internal thinking before committing to action</li>
+                <li><strong>Action (A):</strong> External action taken based on reasoning</li>
+            </ul>
+            <p style="margin-top:10px;"><em>"This decomposition highlights the core shift: performing computation in Z (thinking) before committing to A (acting)."</em></p>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Scenario</label>
+                    <select id="scenario" onchange="resetSimulation()">
+                        <option value="navigation">Navigation under Fog</option>
+                        <option value="search">Search for Hidden Goal</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Visibility Range</label>
+                    <input type="range" id="visibility" min="1" max="3" value="1">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; color:#888;">
+                        <span>Low</span><span>High</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Animation Speed (ms)</label>
+                    <input type="range" id="speed" min="200" max="1500" value="600">
+                </div>
+
+                <button class="btn-primary" onclick="runAgent()">Run Autonomous Agent</button>
+                <button class="btn-secondary" onclick="stepAgent()">Step</button>
+                <button class="btn-secondary" onclick="resetSimulation()">Reset</button>
+
+                <div class="action-buttons">
+                    <div></div>
+                    <button class="action-btn" onclick="manualMove('up')">↑</button>
+                    <div></div>
+                    <button class="action-btn" onclick="manualMove('left')">←</button>
+                    <button class="action-btn" onclick="manualMove('down')">↓</button>
+                    <button class="action-btn" onclick="manualMove('right')">→</button>
+                </div>
+
+                <div class="stats-panel">
+                    <div class="stat-box">
+                        <div class="stat-value" id="stepCount">0</div>
+                        <div class="stat-label">Steps</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="beliefEntropy">1.0</div>
+                        <div class="stat-label">Uncertainty</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="rewardTotal">0</div>
+                        <div class="stat-label">Reward</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="goalFound">No</div>
+                        <div class="stat-label">Goal</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visualization">
+                <div class="world-grid" id="world"></div>
+
+                <div class="panels-row">
+                    <div class="panel">
+                        <div class="panel-title">🧠 Belief State (Goal Location)</div>
+                        <div class="belief-grid" id="beliefGrid"></div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-title">📜 Reasoning Trace</div>
+                        <div id="trace" style="max-height:200px; overflow-y:auto;"></div>
+                    </div>
+                </div>
+
+                <div class="policy-diagram">
+                    <div class="panel-title">⚡ Policy Decomposition</div>
+                    <div class="policy-formula">
+                        π(z, a | history) = π<sub>reason</sub>(z | history) × π<sub>act</sub>(a | history, z)
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:15px;">
+                        <div style="background:rgba(251,191,36,0.1); padding:10px; border-radius:8px; border-left:3px solid #fbbf24;">
+                            <div style="color:#fbbf24; font-weight:600; font-size:12px;">π_reason (Thinking)</div>
+                            <div id="currentThinking" style="font-size:13px; margin-top:5px;">Analyzing observations...</div>
+                        </div>
+                        <div style="background:rgba(233,69,96,0.1); padding:10px; border-radius:8px; border-left:3px solid #e94560;">
+                            <div style="color:#e94560; font-weight:600; font-size:12px;">π_act (Action)</div>
+                            <div id="currentAction" style="font-size:13px; margin-top:5px;">Waiting...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 5;
+        let agentPos = { x: 0, y: 0 };
+        let goalPos = { x: 4, y: 4 };
+        let obstacles = [];
+        let beliefState = [];
+        let stepCount = 0;
+        let totalReward = 0;
+        let running = false;
+        let goalFound = false;
+        let traceCount = 0;
+
+        function initBelief() {
+            beliefState = [];
+            for (let y = 0; y < GRID_SIZE; y++) {
+                beliefState[y] = [];
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    beliefState[y][x] = 1 / (GRID_SIZE * GRID_SIZE);
+                }
+            }
+        }
+
+        function initWorld() {
+            agentPos = { x: 0, y: 0 };
+            goalPos = { x: Math.floor(Math.random() * 3) + 2, y: Math.floor(Math.random() * 3) + 2 };
+            obstacles = [
+                { x: 2, y: 1 },
+                { x: 2, y: 2 },
+                { x: 1, y: 3 }
+            ];
+            initBelief();
+            stepCount = 0;
+            totalReward = 0;
+            goalFound = false;
+            traceCount = 0;
+            document.getElementById('trace').innerHTML = '';
+            renderWorld();
+            renderBelief();
+            updateStats();
+        }
+
+        function renderWorld() {
+            const world = document.getElementById('world');
+            world.innerHTML = '';
+            const visibility = parseInt(document.getElementById('visibility').value);
+
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+
+                    const dist = Math.abs(x - agentPos.x) + Math.abs(y - agentPos.y);
+                    const visible = dist <= visibility;
+
+                    if (x === agentPos.x && y === agentPos.y) {
+                        cell.classList.add('agent');
+                        cell.textContent = '🤖';
+                    } else if (obstacles.some(o => o.x === x && o.y === y)) {
+                        cell.classList.add('obstacle');
+                        if (visible) cell.textContent = '🧱';
+                    } else if (x === goalPos.x && y === goalPos.y && (visible || goalFound)) {
+                        cell.classList.add('goal');
+                        cell.textContent = '⭐';
+                    } else if (!visible) {
+                        cell.classList.add('fog');
+                        cell.textContent = '?';
+                    }
+
+                    world.appendChild(cell);
+                }
+            }
+        }
+
+        function renderBelief() {
+            const grid = document.getElementById('beliefGrid');
+            grid.innerHTML = '';
+
+            const maxBelief = Math.max(...beliefState.flat());
+
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'belief-cell';
+
+                    const belief = beliefState[y][x];
+                    if (belief > maxBelief * 0.7) cell.classList.add('high');
+                    else if (belief > maxBelief * 0.3) cell.classList.add('medium');
+
+                    cell.textContent = (belief * 100).toFixed(0) + '%';
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function updateBelief(observation) {
+            const visibility = parseInt(document.getElementById('visibility').value);
+
+            // Bayesian update based on observation
+            let total = 0;
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const dist = Math.abs(x - agentPos.x) + Math.abs(y - agentPos.y);
+
+                    if (dist <= visibility) {
+                        // We can see this cell
+                        if (x === goalPos.x && y === goalPos.y) {
+                            beliefState[y][x] = 1; // Found it!
+                        } else {
+                            beliefState[y][x] = 0; // Not here
+                        }
+                    }
+                    // Cells outside visibility keep their belief
+
+                    total += beliefState[y][x];
+                }
+            }
+
+            // Normalize
+            if (total > 0) {
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let x = 0; x < GRID_SIZE; x++) {
+                        beliefState[y][x] /= total;
+                    }
+                }
+            }
+        }
+
+        function calculateEntropy() {
+            let entropy = 0;
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const p = beliefState[y][x];
+                    if (p > 0) {
+                        entropy -= p * Math.log2(p);
+                    }
+                }
+            }
+            return entropy / Math.log2(GRID_SIZE * GRID_SIZE); // Normalize to 0-1
+        }
+
+        function getBestDirection() {
+            // Find cell with highest belief
+            let maxBelief = 0;
+            let targetX = agentPos.x;
+            let targetY = agentPos.y;
+
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    if (beliefState[y][x] > maxBelief) {
+                        maxBelief = beliefState[y][x];
+                        targetX = x;
+                        targetY = y;
+                    }
+                }
+            }
+
+            // Determine direction to target
+            const dx = targetX - agentPos.x;
+            const dy = targetY - agentPos.y;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                return dx > 0 ? 'right' : 'left';
+            } else {
+                return dy > 0 ? 'down' : 'up';
+            }
+        }
+
+        function addTrace(type, content) {
+            traceCount++;
+            const trace = document.getElementById('trace');
+            const entry = document.createElement('div');
+            entry.className = 'trace-entry';
+            entry.innerHTML = `
+                <div class="trace-step">${traceCount}</div>
+                <div class="trace-content">
+                    <div class="trace-type ${type}">${type}</div>
+                    <div>${content}</div>
+                </div>
+            `;
+            trace.insertBefore(entry, trace.firstChild);
+        }
+
+        function updateStats() {
+            document.getElementById('stepCount').textContent = stepCount;
+            document.getElementById('beliefEntropy').textContent = calculateEntropy().toFixed(2);
+            document.getElementById('rewardTotal').textContent = totalReward;
+            document.getElementById('goalFound').textContent = goalFound ? 'Yes!' : 'No';
+        }
+
+        function move(direction) {
+            let newX = agentPos.x;
+            let newY = agentPos.y;
+
+            switch (direction) {
+                case 'up': newY = Math.max(0, agentPos.y - 1); break;
+                case 'down': newY = Math.min(GRID_SIZE - 1, agentPos.y + 1); break;
+                case 'left': newX = Math.max(0, agentPos.x - 1); break;
+                case 'right': newX = Math.min(GRID_SIZE - 1, agentPos.x + 1); break;
+            }
+
+            // Check for obstacles
+            if (obstacles.some(o => o.x === newX && o.y === newY)) {
+                totalReward -= 5;
+                addTrace('observe', 'Hit obstacle! Cannot move there.');
+                return false;
+            }
+
+            agentPos.x = newX;
+            agentPos.y = newY;
+            stepCount++;
+            totalReward -= 1; // Step cost
+
+            // Check for goal
+            if (agentPos.x === goalPos.x && agentPos.y === goalPos.y) {
+                goalFound = true;
+                totalReward += 100;
+                addTrace('observe', 'GOAL REACHED! +100 reward');
+            }
+
+            return true;
+        }
+
+        async function step() {
+            if (goalFound) return false;
+
+            // THINK phase
+            document.getElementById('currentThinking').textContent = 'Analyzing belief state and observations...';
+            const entropy = calculateEntropy();
+            const direction = getBestDirection();
+
+            const thinkContent = `Uncertainty: ${entropy.toFixed(2)}. Best direction: ${direction}. ${
+                entropy > 0.7 ? 'High uncertainty - exploring.' : 'Converging on target.'
+            }`;
+            addTrace('think', thinkContent);
+            document.getElementById('currentThinking').textContent = thinkContent;
+
+            await delay(300);
+
+            // ACT phase
+            document.getElementById('currentAction').textContent = `Moving ${direction}...`;
+            addTrace('act', `Execute action: move ${direction}`);
+
+            move(direction);
+
+            await delay(200);
+
+            // OBSERVE phase
+            updateBelief();
+            const visibility = parseInt(document.getElementById('visibility').value);
+            const visibleCells = [];
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const dist = Math.abs(x - agentPos.x) + Math.abs(y - agentPos.y);
+                    if (dist <= visibility && dist > 0) {
+                        visibleCells.push(`(${x},${y})`);
+                    }
+                }
+            }
+            addTrace('observe', `Observed cells: ${visibleCells.join(', ') || 'none new'}`);
+
+            renderWorld();
+            renderBelief();
+            updateStats();
+
+            return !goalFound;
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function runAgent() {
+            if (running) {
+                running = false;
+                return;
+            }
+
+            running = true;
+            const speed = parseInt(document.getElementById('speed').value);
+
+            while (running && await step()) {
+                await delay(speed);
+            }
+
+            running = false;
+        }
+
+        async function stepAgent() {
+            await step();
+        }
+
+        function manualMove(direction) {
+            addTrace('think', `Manual override: user chose ${direction}`);
+            addTrace('act', `Execute action: move ${direction}`);
+            move(direction);
+            updateBelief();
+            addTrace('observe', 'Updated belief based on new position');
+            renderWorld();
+            renderBelief();
+            updateStats();
+        }
+
+        function resetSimulation() {
+            running = false;
+            initWorld();
+            document.getElementById('currentThinking').textContent = 'Analyzing observations...';
+            document.getElementById('currentAction').textContent = 'Waiting...';
+        }
+
+        // Initialize
+        resetSimulation();
+    </script>
+</body>
+</html>

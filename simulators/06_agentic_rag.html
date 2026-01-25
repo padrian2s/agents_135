@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic RAG Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 {
+            color: #58a6ff;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .subtitle {
+            color: #8b949e;
+            font-size: 1.1em;
+        }
+        .concept-box {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .concept-box h3 {
+            color: #58a6ff;
+            margin-bottom: 10px;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .comparison-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .comparison-panel h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .traditional h3 { color: #f85149; }
+        .agentic h3 { color: #3fb950; }
+        .controls {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        .control-row {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #58a6ff;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 14px;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #58a6ff, #1f6feb);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(88, 166, 255, 0.4);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .pipeline-viz {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .pipeline-steps {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .pipeline-step {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .pipeline-step.active {
+            border-color: #58a6ff;
+            background: rgba(88, 166, 255, 0.1);
+        }
+        .pipeline-step.complete {
+            border-color: #3fb950;
+            background: rgba(63, 185, 80, 0.1);
+        }
+        .pipeline-step.skipped {
+            opacity: 0.4;
+        }
+        .step-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .step-name {
+            font-weight: 600;
+            font-size: 12px;
+            color: #8b949e;
+        }
+        .pipeline-arrow {
+            color: #484f58;
+            font-size: 20px;
+        }
+        .output-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            min-height: 200px;
+        }
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .output-title {
+            font-weight: 600;
+        }
+        .traditional .output-title { color: #f85149; }
+        .agentic .output-title { color: #3fb950; }
+        .iteration-badge {
+            background: #58a6ff;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        .retrieval-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #58a6ff;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .retrieval-item.relevant {
+            border-color: #3fb950;
+            background: rgba(63, 185, 80, 0.1);
+        }
+        .retrieval-item.irrelevant {
+            border-color: #f85149;
+            opacity: 0.6;
+        }
+        .retrieval-score {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .score-high { background: #3fb950; color: #000; }
+        .score-med { background: #d29922; color: #000; }
+        .score-low { background: #f85149; color: #fff; }
+        .doc-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .doc-snippet {
+            font-size: 13px;
+            color: #8b949e;
+        }
+        .thought-bubble {
+            background: rgba(136, 87, 255, 0.1);
+            border: 1px solid rgba(136, 87, 255, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        .thought-label {
+            color: #8857ff;
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        .answer-box {
+            background: rgba(63, 185, 80, 0.1);
+            border: 1px solid rgba(63, 185, 80, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .answer-label {
+            color: #3fb950;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .metrics {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .metric {
+            background: rgba(255,255,255,0.05);
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .traditional .metric-value { color: #f85149; }
+        .agentic .metric-value { color: #3fb950; }
+        .metric-label {
+            font-size: 11px;
+            color: #8b949e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Agentic RAG Simulator</h1>
+            <p class="subtitle">Traditional RAG vs Dynamic Agentic Retrieval</p>
+        </header>
+
+        <div class="concept-box">
+            <h3>Concept from "Agentic Reasoning" Survey (Pages 18-19)</h3>
+            <p>Agentic RAG transforms retrieval from static to dynamic and intelligent:</p>
+            <ul>
+                <li><strong>Traditional RAG:</strong> Single-shot retrieval → generation (fixed pipeline)</li>
+                <li><strong>Agentic RAG:</strong> Dynamic decisions on WHEN, WHAT, and HOW to retrieve</li>
+                <li><strong>Iterative Refinement:</strong> Query reformulation based on retrieved results</li>
+                <li><strong>Relevance Critique:</strong> Evaluate and filter retrieved documents before generation</li>
+            </ul>
+            <p style="margin-top:10px;"><em>"Unlike traditional RAG that performs fixed one-shot retrieval, agentic RAG agents dynamically control when, what, and how to retrieve based on real-time reasoning needs."</em></p>
+        </div>
+
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group" style="flex:2;">
+                    <label>Query</label>
+                    <input type="text" id="query" value="What are the side effects of combining aspirin with blood thinners, and what alternatives exist?">
+                </div>
+                <div class="control-group" style="flex:0;">
+                    <label>&nbsp;</label>
+                    <button class="btn-primary" onclick="runComparison()">Compare Both</button>
+                </div>
+                <div class="control-group" style="flex:0;">
+                    <label>&nbsp;</label>
+                    <button class="btn-secondary" onclick="resetComparison()">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="comparison-panel traditional">
+                <h3>❌ Traditional RAG</h3>
+                <div class="pipeline-viz">
+                    <div class="pipeline-steps">
+                        <div class="pipeline-step" id="trad-step-1">
+                            <div class="step-icon">📝</div>
+                            <div class="step-name">Query</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-step" id="trad-step-2">
+                            <div class="step-icon">🔍</div>
+                            <div class="step-name">Retrieve</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-step" id="trad-step-3">
+                            <div class="step-icon">✍️</div>
+                            <div class="step-name">Generate</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="output-panel">
+                    <div class="output-header">
+                        <span class="output-title">Retrieved Documents (One-Shot)</span>
+                    </div>
+                    <div id="trad-output">
+                        <div style="color:#8b949e; text-align:center; padding:40px;">
+                            Run comparison to see results...
+                        </div>
+                    </div>
+                </div>
+                <div class="metrics" id="trad-metrics" style="display:none;">
+                    <div class="metric">
+                        <div class="metric-value" id="trad-retrievals">1</div>
+                        <div class="metric-label">Retrievals</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="trad-relevant">2/5</div>
+                        <div class="metric-label">Relevant</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="trad-quality">65%</div>
+                        <div class="metric-label">Answer Quality</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comparison-panel agentic">
+                <h3>✅ Agentic RAG</h3>
+                <div class="pipeline-viz">
+                    <div class="pipeline-steps">
+                        <div class="pipeline-step" id="agent-step-1">
+                            <div class="step-icon">🤔</div>
+                            <div class="step-name">Reason</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-step" id="agent-step-2">
+                            <div class="step-icon">🔍</div>
+                            <div class="step-name">Retrieve</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-step" id="agent-step-3">
+                            <div class="step-icon">⚖️</div>
+                            <div class="step-name">Critique</div>
+                        </div>
+                        <div class="pipeline-arrow">↺</div>
+                        <div class="pipeline-step" id="agent-step-4">
+                            <div class="step-icon">✍️</div>
+                            <div class="step-name">Generate</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="output-panel">
+                    <div class="output-header">
+                        <span class="output-title">Iterative Retrieval Process</span>
+                        <span class="iteration-badge" id="iteration-count">Iteration 0</span>
+                    </div>
+                    <div id="agent-output">
+                        <div style="color:#8b949e; text-align:center; padding:40px;">
+                            Run comparison to see results...
+                        </div>
+                    </div>
+                </div>
+                <div class="metrics" id="agent-metrics" style="display:none;">
+                    <div class="metric">
+                        <div class="metric-value" id="agent-retrievals">3</div>
+                        <div class="metric-label">Retrievals</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="agent-relevant">5/6</div>
+                        <div class="metric-label">Relevant</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="agent-quality">92%</div>
+                        <div class="metric-label">Answer Quality</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const knowledgeBase = [
+            { id: 1, title: "Aspirin Drug Interactions", content: "Aspirin can increase bleeding risk when combined with anticoagulants like warfarin. Monitor INR closely.", relevance: { 'aspirin': 0.9, 'blood': 0.8, 'side effects': 0.7 } },
+            { id: 2, title: "Warfarin Side Effects", content: "Common side effects include bleeding, bruising, and red/brown urine. Risk increases with NSAIDs.", relevance: { 'blood thinners': 0.9, 'side effects': 0.9, 'aspirin': 0.6 } },
+            { id: 3, title: "NSAID Alternatives", content: "For patients on blood thinners, acetaminophen is often recommended as a safer alternative to aspirin.", relevance: { 'alternatives': 0.95, 'aspirin': 0.7, 'blood thinners': 0.8 } },
+            { id: 4, title: "Aspirin History", content: "Aspirin was first synthesized in 1897 by Felix Hoffmann at Bayer.", relevance: { 'aspirin': 0.3, 'history': 0.9 } },
+            { id: 5, title: "Blood Thinner Types", content: "Blood thinners include warfarin, heparin, and newer DOACs like rivaroxaban and apixaban.", relevance: { 'blood thinners': 0.9, 'types': 0.8 } },
+            { id: 6, title: "Drug Interaction Mechanisms", content: "Aspirin inhibits platelet aggregation while warfarin inhibits vitamin K. Combined effect greatly increases bleeding risk.", relevance: { 'aspirin': 0.85, 'blood thinners': 0.85, 'side effects': 0.8 } },
+            { id: 7, title: "Cooking with Herbs", content: "Herbs like rosemary and thyme can enhance the flavor of roasted vegetables.", relevance: { } },
+            { id: 8, title: "Pain Management Guidelines", content: "For anticoagulated patients needing pain relief, non-pharmacological methods or acetaminophen are first-line.", relevance: { 'alternatives': 0.9, 'blood thinners': 0.7 } }
+        ];
+
+        function calculateRelevance(doc, queryTerms) {
+            let score = 0;
+            for (const term of queryTerms) {
+                const termLower = term.toLowerCase();
+                for (const [key, val] of Object.entries(doc.relevance)) {
+                    if (key.includes(termLower) || termLower.includes(key)) {
+                        score += val;
+                    }
+                }
+            }
+            return Math.min(score / queryTerms.length, 1);
+        }
+
+        function setStepActive(prefix, stepNum, status = 'active') {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`${prefix}-step-${i}`);
+                if (el) {
+                    el.classList.remove('active', 'complete', 'skipped');
+                    if (i < stepNum) el.classList.add('complete');
+                    else if (i === stepNum) el.classList.add(status);
+                }
+            }
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function runTraditionalRAG(query) {
+            const output = document.getElementById('trad-output');
+            output.innerHTML = '';
+
+            // Step 1: Query
+            setStepActive('trad', 1);
+            await delay(500);
+
+            // Step 2: One-shot retrieval
+            setStepActive('trad', 2);
+            await delay(800);
+
+            const queryTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 3);
+
+            // Get top 5 by simple relevance
+            const results = knowledgeBase.map(doc => ({
+                ...doc,
+                score: calculateRelevance(doc, queryTerms)
+            })).sort((a, b) => b.score - a.score).slice(0, 5);
+
+            let relevant = 0;
+            for (const doc of results) {
+                const isRelevant = doc.score > 0.3;
+                if (isRelevant) relevant++;
+
+                const scoreClass = doc.score > 0.6 ? 'score-high' : doc.score > 0.3 ? 'score-med' : 'score-low';
+
+                output.innerHTML += `
+                    <div class="retrieval-item ${isRelevant ? 'relevant' : 'irrelevant'}">
+                        <div class="doc-title">${doc.title}
+                            <span class="retrieval-score ${scoreClass}">${(doc.score * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="doc-snippet">${doc.content}</div>
+                    </div>
+                `;
+                await delay(200);
+            }
+
+            // Step 3: Generate
+            setStepActive('trad', 3);
+            await delay(600);
+
+            output.innerHTML += `
+                <div class="answer-box" style="border-color: #f85149; background: rgba(248, 81, 73, 0.1);">
+                    <div class="answer-label" style="color: #f85149;">Generated Answer (Incomplete)</div>
+                    <div>Aspirin can interact with blood thinners and increase bleeding risk. Some alternatives exist.
+                    <em style="color:#8b949e;">(Missing: specific mechanisms, concrete alternatives, dosing guidance)</em></div>
+                </div>
+            `;
+
+            document.getElementById('trad-metrics').style.display = 'flex';
+            document.getElementById('trad-relevant').textContent = `${relevant}/5`;
+            document.getElementById('trad-quality').textContent = '65%';
+        }
+
+        async function runAgenticRAG(query) {
+            const output = document.getElementById('agent-output');
+            output.innerHTML = '';
+
+            let iteration = 0;
+            let collectedDocs = [];
+            let queryTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 3);
+
+            // Iteration 1: Initial reasoning + retrieval
+            iteration++;
+            document.getElementById('iteration-count').textContent = `Iteration ${iteration}`;
+
+            // Step 1: Reason
+            setStepActive('agent', 1);
+            output.innerHTML += `
+                <div class="thought-bubble">
+                    <div class="thought-label">Reasoning</div>
+                    This query has multiple parts: (1) side effects of combining aspirin + blood thinners,
+                    (2) alternatives. I should search for drug interactions first.
+                </div>
+            `;
+            await delay(700);
+
+            // Step 2: Retrieve
+            setStepActive('agent', 2);
+            let results = knowledgeBase.map(doc => ({
+                ...doc,
+                score: calculateRelevance(doc, ['aspirin', 'blood thinners', 'interaction'])
+            })).sort((a, b) => b.score - a.score).slice(0, 3);
+
+            for (const doc of results) {
+                if (doc.score > 0.3) collectedDocs.push(doc);
+                output.innerHTML += `
+                    <div class="retrieval-item ${doc.score > 0.3 ? 'relevant' : 'irrelevant'}">
+                        <div class="doc-title">${doc.title}
+                            <span class="retrieval-score ${doc.score > 0.6 ? 'score-high' : 'score-med'}">${(doc.score * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="doc-snippet">${doc.content}</div>
+                    </div>
+                `;
+                await delay(200);
+            }
+
+            // Step 3: Critique
+            setStepActive('agent', 3);
+            output.innerHTML += `
+                <div class="thought-bubble">
+                    <div class="thought-label">Critique</div>
+                    Found good info on interactions and side effects, but missing specific alternatives.
+                    Need another retrieval focused on "alternatives" and "pain management".
+                </div>
+            `;
+            await delay(700);
+
+            // Iteration 2: Refined retrieval
+            iteration++;
+            document.getElementById('iteration-count').textContent = `Iteration ${iteration}`;
+
+            setStepActive('agent', 2);
+            results = knowledgeBase.map(doc => ({
+                ...doc,
+                score: calculateRelevance(doc, ['alternatives', 'pain', 'acetaminophen'])
+            })).filter(d => !collectedDocs.find(c => c.id === d.id))
+              .sort((a, b) => b.score - a.score).slice(0, 2);
+
+            for (const doc of results) {
+                if (doc.score > 0.3) collectedDocs.push(doc);
+                output.innerHTML += `
+                    <div class="retrieval-item ${doc.score > 0.3 ? 'relevant' : 'irrelevant'}">
+                        <div class="doc-title">${doc.title}
+                            <span class="retrieval-score ${doc.score > 0.6 ? 'score-high' : 'score-med'}">${(doc.score * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="doc-snippet">${doc.content}</div>
+                    </div>
+                `;
+                await delay(200);
+            }
+
+            // Final critique
+            setStepActive('agent', 3);
+            output.innerHTML += `
+                <div class="thought-bubble">
+                    <div class="thought-label">Final Critique</div>
+                    Now have comprehensive coverage: interaction mechanisms, side effects, and alternatives.
+                    Ready to generate complete answer.
+                </div>
+            `;
+            await delay(500);
+
+            // Step 4: Generate
+            setStepActive('agent', 4);
+            await delay(600);
+
+            output.innerHTML += `
+                <div class="answer-box">
+                    <div class="answer-label">Generated Answer (Complete)</div>
+                    <div><strong>Side Effects:</strong> Combining aspirin with blood thinners (warfarin, DOACs) significantly increases bleeding risk.
+                    Aspirin inhibits platelet aggregation while anticoagulants inhibit clotting factors, creating compounded effect.
+                    Watch for: unusual bleeding, bruising, blood in urine.<br><br>
+                    <strong>Alternatives:</strong> Acetaminophen (Tylenol) is recommended as first-line pain relief for anticoagulated patients.
+                    Non-pharmacological methods should also be considered. Always consult healthcare provider before changes.</div>
+                </div>
+            `;
+
+            document.getElementById('agent-metrics').style.display = 'flex';
+            document.getElementById('agent-retrievals').textContent = '2';
+            document.getElementById('agent-relevant').textContent = `${collectedDocs.length}/${collectedDocs.length + 1}`;
+            document.getElementById('agent-quality').textContent = '92%';
+        }
+
+        async function runComparison() {
+            resetComparison();
+            await Promise.all([
+                runTraditionalRAG(document.getElementById('query').value),
+                runAgenticRAG(document.getElementById('query').value)
+            ]);
+        }
+
+        function resetComparison() {
+            document.getElementById('trad-output').innerHTML = '<div style="color:#8b949e; text-align:center; padding:40px;">Run comparison to see results...</div>';
+            document.getElementById('agent-output').innerHTML = '<div style="color:#8b949e; text-align:center; padding:40px;">Run comparison to see results...</div>';
+            document.getElementById('trad-metrics').style.display = 'none';
+            document.getElementById('agent-metrics').style.display = 'none';
+            document.getElementById('iteration-count').textContent = 'Iteration 0';
+
+            for (let i = 1; i <= 3; i++) {
+                const el = document.getElementById(`trad-step-${i}`);
+                if (el) el.classList.remove('active', 'complete');
+            }
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`agent-step-${i}`);
+                if (el) el.classList.remove('active', 'complete');
+            }
+        }
+    </script>
+</body>
+</html>

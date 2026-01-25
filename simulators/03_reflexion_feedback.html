@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflexion Feedback Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 {
+            color: #a855f7;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 1.1em;
+        }
+        .concept-box {
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .concept-box h3 {
+            color: #a855f7;
+            margin-bottom: 10px;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+        }
+        .controls {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a855f7;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(168, 85, 247, 0.4);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .visualization {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .loop-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .loop-step {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            min-width: 140px;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .loop-step.active {
+            border-color: #a855f7;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+        }
+        .loop-step.complete {
+            border-color: #22c55e;
+        }
+        .loop-step.failed {
+            border-color: #ef4444;
+        }
+        .loop-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .loop-label {
+            font-weight: 600;
+            color: #a855f7;
+        }
+        .loop-arrow {
+            font-size: 24px;
+            color: #666;
+        }
+        .iterations-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 15px;
+        }
+        .iteration-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid #a855f7;
+        }
+        .iteration-card.success {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+        .iteration-card.failure {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .iteration-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .iteration-num {
+            font-weight: 700;
+            color: #a855f7;
+            font-size: 16px;
+        }
+        .iteration-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .iteration-status.pass { background: #22c55e; color: #000; }
+        .iteration-status.fail { background: #ef4444; color: #fff; }
+        .iteration-status.pending { background: #666; color: #fff; }
+        .section-box {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .section-content {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .code-block {
+            background: rgba(0,0,0,0.4);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        .error-text { color: #ef4444; }
+        .success-text { color: #22c55e; }
+        .reflection-text { color: #fbbf24; }
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a855f7, #22c55e);
+            transition: width 0.5s;
+        }
+        .memory-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .memory-title {
+            color: #a855f7;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .memory-item {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            border-left: 3px solid #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Reflexion Feedback Simulator</h1>
+            <p class="subtitle">Self-Critique and Iterative Improvement through Reflection</p>
+        </header>
+
+        <div class="concept-box">
+            <h3>Concept from "Agentic Reasoning" Survey (Pages 21, 23)</h3>
+            <p>Reflexion implements a <strong>Generate-Critique-Revise</strong> loop for self-improvement:</p>
+            <ul>
+                <li><strong>Generate:</strong> Produce an initial solution/answer</li>
+                <li><strong>Evaluate:</strong> Test the solution against validators (tests, criteria)</li>
+                <li><strong>Reflect:</strong> Analyze failures to identify errors and improvements</li>
+                <li><strong>Memory:</strong> Store reflections to avoid repeating mistakes</li>
+                <li><strong>Revise:</strong> Generate improved solution using reflections</li>
+            </ul>
+            <p style="margin-top:10px;"><em>"Reflection-based frameworks allow agents to critique and refine their own reasoning processes."</em></p>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Coding Task</label>
+                    <select id="task" onchange="updateTask()">
+                        <option value="fizzbuzz">FizzBuzz Function</option>
+                        <option value="palindrome">Palindrome Checker</option>
+                        <option value="fibonacci">Fibonacci Sequence</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Task Description</label>
+                    <div id="taskDesc" style="font-size:13px; color:#aaa; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px;">
+                        Write a function that prints numbers 1-n. For multiples of 3 print "Fizz", for multiples of 5 print "Buzz", for both print "FizzBuzz".
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Max Iterations</label>
+                    <input type="number" id="maxIter" value="4" min="1" max="6">
+                </div>
+
+                <div class="control-group">
+                    <label>Animation Speed (ms)</label>
+                    <input type="range" id="speed" min="300" max="2000" value="1000">
+                </div>
+
+                <button class="btn-primary" onclick="runReflexion()">Run Reflexion Loop</button>
+                <button class="btn-secondary" onclick="stepReflexion()">Step</button>
+                <button class="btn-secondary" onclick="resetReflexion()">Reset</button>
+
+                <div class="memory-panel">
+                    <div class="memory-title">📝 Reflection Memory</div>
+                    <div id="memory">
+                        <div style="color:#666; font-size:13px;">No reflections stored yet...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visualization">
+                <div class="loop-diagram">
+                    <div class="loop-step" id="step-generate">
+                        <div class="loop-icon">🔨</div>
+                        <div class="loop-label">Generate</div>
+                    </div>
+                    <div class="loop-arrow">→</div>
+                    <div class="loop-step" id="step-evaluate">
+                        <div class="loop-icon">🧪</div>
+                        <div class="loop-label">Evaluate</div>
+                    </div>
+                    <div class="loop-arrow">→</div>
+                    <div class="loop-step" id="step-reflect">
+                        <div class="loop-icon">🪞</div>
+                        <div class="loop-label">Reflect</div>
+                    </div>
+                    <div class="loop-arrow">↩️</div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress" style="width: 0%"></div>
+                </div>
+
+                <div class="iterations-panel" id="iterations"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tasks = {
+            fizzbuzz: {
+                description: 'Write a function that prints numbers 1-n. For multiples of 3 print "Fizz", for multiples of 5 print "Buzz", for both print "FizzBuzz".',
+                tests: [
+                    { input: 1, expected: '1' },
+                    { input: 3, expected: 'Fizz' },
+                    { input: 5, expected: 'Buzz' },
+                    { input: 15, expected: 'FizzBuzz' },
+                    { input: 7, expected: '7' }
+                ],
+                attempts: [
+                    {
+                        code: `function fizzbuzz(n) {
+    for (let i = 1; i <= n; i++) {
+        if (i % 3 === 0) return 'Fizz';
+        if (i % 5 === 0) return 'Buzz';
+        return i.toString();
+    }
+}`,
+                        errors: ['Returns only first value', 'Missing FizzBuzz case'],
+                        reflection: 'The function returns on the first iteration instead of building results. Also missing the combined FizzBuzz check.'
+                    },
+                    {
+                        code: `function fizzbuzz(n) {
+    if (n % 3 === 0 && n % 5 === 0) return 'FizzBuzz';
+    if (n % 3 === 0) return 'Fizz';
+    if (n % 5 === 0) return 'Buzz';
+    return n.toString();
+}`,
+                        errors: [],
+                        reflection: null
+                    }
+                ]
+            },
+            palindrome: {
+                description: 'Write a function that checks if a string is a palindrome (reads same forwards and backwards), ignoring case and non-alphanumeric characters.',
+                tests: [
+                    { input: 'racecar', expected: true },
+                    { input: 'hello', expected: false },
+                    { input: 'A man a plan a canal Panama', expected: true },
+                    { input: '', expected: true }
+                ],
+                attempts: [
+                    {
+                        code: `function isPalindrome(s) {
+    return s === s.split('').reverse().join('');
+}`,
+                        errors: ['Does not ignore case', 'Does not filter non-alphanumeric'],
+                        reflection: 'Need to normalize the string first - convert to lowercase and remove non-alphanumeric characters before comparison.'
+                    },
+                    {
+                        code: `function isPalindrome(s) {
+    const clean = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return clean === clean.split('').reverse().join('');
+}`,
+                        errors: [],
+                        reflection: null
+                    }
+                ]
+            },
+            fibonacci: {
+                description: 'Write a function that returns the nth Fibonacci number (0-indexed). F(0)=0, F(1)=1, F(n)=F(n-1)+F(n-2)',
+                tests: [
+                    { input: 0, expected: 0 },
+                    { input: 1, expected: 1 },
+                    { input: 6, expected: 8 },
+                    { input: 10, expected: 55 }
+                ],
+                attempts: [
+                    {
+                        code: `function fibonacci(n) {
+    if (n <= 1) return 1;
+    return fibonacci(n-1) + fibonacci(n-2);
+}`,
+                        errors: ['F(0) should return 0, not 1', 'Base case is wrong'],
+                        reflection: 'The base case is incorrect. F(0) should return 0 and F(1) should return 1, but current code returns 1 for both.'
+                    },
+                    {
+                        code: `function fibonacci(n) {
+    if (n === 0) return 0;
+    if (n === 1) return 1;
+    return fibonacci(n-1) + fibonacci(n-2);
+}`,
+                        errors: [],
+                        reflection: null
+                    }
+                ]
+            }
+        };
+
+        let currentTask = 'fizzbuzz';
+        let currentIteration = 0;
+        let running = false;
+        let reflections = [];
+
+        function updateTask() {
+            currentTask = document.getElementById('task').value;
+            document.getElementById('taskDesc').textContent = tasks[currentTask].description;
+            resetReflexion();
+        }
+
+        function clearStepHighlights() {
+            document.querySelectorAll('.loop-step').forEach(el => {
+                el.classList.remove('active', 'complete', 'failed');
+            });
+        }
+
+        function highlightStep(stepId, status = 'active') {
+            clearStepHighlights();
+            const el = document.getElementById(`step-${stepId}`);
+            if (el) el.classList.add(status);
+        }
+
+        function updateProgress(iteration, maxIter) {
+            const progress = (iteration / maxIter) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function updateMemory() {
+            const memoryEl = document.getElementById('memory');
+            if (reflections.length === 0) {
+                memoryEl.innerHTML = '<div style="color:#666; font-size:13px;">No reflections stored yet...</div>';
+                return;
+            }
+            memoryEl.innerHTML = reflections.map((r, i) => `
+                <div class="memory-item">
+                    <strong>Iteration ${i + 1}:</strong> ${r}
+                </div>
+            `).join('');
+        }
+
+        function addIterationCard(iteration, attempt, testResults, status) {
+            const panel = document.getElementById('iterations');
+            const card = document.createElement('div');
+            card.className = `iteration-card ${status}`;
+
+            const statusLabel = status === 'success' ? 'PASS' : 'FAIL';
+            const statusClass = status === 'success' ? 'pass' : 'fail';
+
+            card.innerHTML = `
+                <div class="iteration-header">
+                    <span class="iteration-num">Iteration ${iteration}</span>
+                    <span class="iteration-status ${statusClass}">${statusLabel}</span>
+                </div>
+                <div class="section-box">
+                    <div class="section-title">Generated Code</div>
+                    <div class="code-block">${escapeHtml(attempt.code)}</div>
+                </div>
+                <div class="section-box">
+                    <div class="section-title">Test Results</div>
+                    <div class="section-content">${testResults}</div>
+                </div>
+                ${attempt.reflection ? `
+                <div class="section-box">
+                    <div class="section-title">Reflection</div>
+                    <div class="section-content reflection-text">${attempt.reflection}</div>
+                </div>
+                ` : ''}
+            `;
+            panel.appendChild(card);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function runTests(attempt, tests) {
+            let results = [];
+            let allPass = true;
+
+            for (const test of tests) {
+                const pass = attempt.errors.length === 0;
+                if (!pass) allPass = false;
+                results.push(`<div class="${pass ? 'success-text' : 'error-text'}">
+                    ${pass ? '✓' : '✗'} Input: ${JSON.stringify(test.input)} → Expected: ${JSON.stringify(test.expected)}
+                </div>`);
+            }
+
+            if (attempt.errors.length > 0) {
+                results.push(`<div class="error-text" style="margin-top:8px;">
+                    <strong>Errors:</strong> ${attempt.errors.join(', ')}
+                </div>`);
+            }
+
+            return { html: results.join(''), passed: allPass };
+        }
+
+        async function step() {
+            const task = tasks[currentTask];
+            const maxIter = parseInt(document.getElementById('maxIter').value);
+
+            if (currentIteration >= task.attempts.length || currentIteration >= maxIter) {
+                return false;
+            }
+
+            const attempt = task.attempts[currentIteration];
+            const speed = parseInt(document.getElementById('speed').value);
+
+            // Generate step
+            highlightStep('generate', 'active');
+            await delay(speed / 3);
+
+            // Evaluate step
+            highlightStep('evaluate', 'active');
+            await delay(speed / 3);
+
+            const testResults = runTests(attempt, task.tests);
+
+            if (testResults.passed) {
+                // Success!
+                addIterationCard(currentIteration + 1, attempt, testResults.html, 'success');
+                highlightStep('evaluate', 'complete');
+                currentIteration++;
+                updateProgress(currentIteration, maxIter);
+                return false;
+            }
+
+            // Reflect step
+            highlightStep('reflect', 'active');
+            await delay(speed / 3);
+
+            if (attempt.reflection) {
+                reflections.push(attempt.reflection);
+                updateMemory();
+            }
+
+            addIterationCard(currentIteration + 1, attempt, testResults.html, 'failure');
+            currentIteration++;
+            updateProgress(currentIteration, maxIter);
+
+            return currentIteration < task.attempts.length && currentIteration < maxIter;
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function runReflexion() {
+            if (running) {
+                running = false;
+                return;
+            }
+
+            resetReflexion();
+            running = true;
+            const speed = parseInt(document.getElementById('speed').value);
+
+            while (running && await step()) {
+                await delay(speed);
+            }
+
+            running = false;
+            clearStepHighlights();
+        }
+
+        async function stepReflexion() {
+            await step();
+            clearStepHighlights();
+        }
+
+        function resetReflexion() {
+            running = false;
+            currentIteration = 0;
+            reflections = [];
+            document.getElementById('iterations').innerHTML = '';
+            document.getElementById('progress').style.width = '0%';
+            clearStepHighlights();
+            updateMemory();
+        }
+    </script>
+</body>
+</html>
