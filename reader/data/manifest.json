@@ -1,0 +1,506 @@
+{
+  "title": "Agentic Reasoning for Large Language Models",
+  "totalPages": 135,
+  "pages": [
+    {
+      "page": 1,
+      "title": "Title Page & Abstract",
+      "hasContent": true
+    },
+    {
+      "page": 2,
+      "title": "Framework Overview (Figure 1)",
+      "hasContent": true
+    },
+    {
+      "page": 3,
+      "title": "Definition of Agentic Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 4,
+      "title": "Survey Scope & Contributions",
+      "hasContent": true
+    },
+    {
+      "page": 5,
+      "title": "Table of Contents (Part 1)",
+      "hasContent": true
+    },
+    {
+      "page": 6,
+      "title": "Table of Contents (Part 2)",
+      "hasContent": true
+    },
+    {
+      "page": 7,
+      "title": "From LLM to Agentic Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 8,
+      "title": "Preliminaries & Formalization",
+      "hasContent": true
+    },
+    {
+      "page": 9,
+      "title": "In-Context vs Post-Training Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 10,
+      "title": "Foundational Agentic Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 11,
+      "title": "In-Context Planning (Figure 2)",
+      "hasContent": true
+    },
+    {
+      "page": 12,
+      "title": "Agentic Planning Methods (Table 2)",
+      "hasContent": true
+    },
+    {
+      "page": 13,
+      "title": "Post-Training Planning",
+      "hasContent": true
+    },
+    {
+      "page": 14,
+      "title": "Tool-Use Optimization (Table 3)",
+      "hasContent": true
+    },
+    {
+      "page": 15,
+      "title": "Traditional LLM vs Agentic Tool Systems (Figure 3)",
+      "hasContent": true
+    },
+    {
+      "page": 16,
+      "title": "Post-Training Tool Integration",
+      "hasContent": true
+    },
+    {
+      "page": 17,
+      "title": "Orchestration-Based Tool Integration",
+      "hasContent": true
+    },
+    {
+      "page": 18,
+      "title": "Agentic Search (Figure 4)",
+      "hasContent": true
+    },
+    {
+      "page": 19,
+      "title": "Agentic Search Methods (Table 4)",
+      "hasContent": true
+    },
+    {
+      "page": 20,
+      "title": "Self-Evolving Agentic Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 21,
+      "title": "Feedback Mechanisms (Figure 5)",
+      "hasContent": true
+    },
+    {
+      "page": 22,
+      "title": "Parametric Adaptation",
+      "hasContent": true
+    },
+    {
+      "page": 23,
+      "title": "Feedback Mechanisms (Table 5)",
+      "hasContent": true
+    },
+    {
+      "page": 24,
+      "title": "Agentic Memory (Figure 6)",
+      "hasContent": true
+    },
+    {
+      "page": 25,
+      "title": "Agentic Memory Systems (Table 6)",
+      "hasContent": true
+    },
+    {
+      "page": 26,
+      "title": "Structured Memory & Experience Memory",
+      "hasContent": true
+    },
+    {
+      "page": 27,
+      "title": "Post-Training Memory Control",
+      "hasContent": true
+    },
+    {
+      "page": 28,
+      "title": "Evolving Capabilities (Figure 7)",
+      "hasContent": true
+    },
+    {
+      "page": 29,
+      "title": "Self-Evolving Search & Multi-Agent Introduction",
+      "hasContent": true
+    },
+    {
+      "page": 30,
+      "title": "Multi-Agent Role Taxonomy (Figure 8)",
+      "hasContent": true
+    },
+    {
+      "page": 31,
+      "title": "Generic & Domain-Specific Roles",
+      "hasContent": true
+    },
+    {
+      "page": 32,
+      "title": "Finance, Legal & Education Domains",
+      "hasContent": true
+    },
+    {
+      "page": 33,
+      "title": "Healthcare & Biomedicine Domains",
+      "hasContent": true
+    },
+    {
+      "page": 34,
+      "title": "Collaboration Patterns (Figure 9)",
+      "hasContent": true
+    },
+    {
+      "page": 35,
+      "title": "In-Context Collaboration",
+      "hasContent": true
+    },
+    {
+      "page": 36,
+      "title": "Post-Training Collaboration",
+      "hasContent": true
+    },
+    {
+      "page": 37,
+      "title": "Policy-Based Optimization",
+      "hasContent": true
+    },
+    {
+      "page": 38,
+      "title": "Multi-Agent Evolution",
+      "hasContent": true
+    },
+    {
+      "page": 39,
+      "title": "Intra & Inter Test-Time Evolution",
+      "hasContent": true
+    },
+    {
+      "page": 40,
+      "title": "Multi-Agent Memory (Figure 10)",
+      "hasContent": true
+    },
+    {
+      "page": 41,
+      "title": "Memory Content and Management Strategies",
+      "hasContent": true
+    },
+    {
+      "page": 42,
+      "title": "Training Multi-Agent to Evolve",
+      "hasContent": true
+    },
+    {
+      "page": 43,
+      "title": "Applications Overview (Figure 11)",
+      "hasContent": true
+    },
+    {
+      "page": 44,
+      "title": "Math Exploration & Vibe Coding Agents",
+      "hasContent": true
+    },
+    {
+      "page": 45,
+      "title": "Planning and Tool-Use in Math/Code",
+      "hasContent": true
+    },
+    {
+      "page": 46,
+      "title": "Search and Retrieval for Math/Code",
+      "hasContent": true
+    },
+    {
+      "page": 47,
+      "title": "Memory and Collective Multi-Agent Reasoning in Math/Code",
+      "hasContent": true
+    },
+    {
+      "page": 48,
+      "title": "Scientific Discovery Agents",
+      "hasContent": true
+    },
+    {
+      "page": 49,
+      "title": "Tool-Use and Search in Scientific Discovery",
+      "hasContent": true
+    },
+    {
+      "page": 50,
+      "title": "Self-Evolving Scientific Agents",
+      "hasContent": true
+    },
+    {
+      "page": 51,
+      "title": "Collective Multi-Agent Scientific Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 52,
+      "title": "Embodied Agents: Foundational Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 53,
+      "title": "Embodied Agents: Self-Evolving Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 54,
+      "title": "Embodied Agents: Collective Reasoning & Healthcare Intro",
+      "hasContent": true
+    },
+    {
+      "page": 55,
+      "title": "Healthcare Agents: Foundational Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 56,
+      "title": "Healthcare Agents: Tool-Use and Self-Evolving",
+      "hasContent": true
+    },
+    {
+      "page": 57,
+      "title": "Healthcare Agents: Collective Reasoning & Web Agents Intro",
+      "hasContent": true
+    },
+    {
+      "page": 58,
+      "title": "Web Agents: Foundational Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 59,
+      "title": "Web Agents: Tool-Use and Planning",
+      "hasContent": true
+    },
+    {
+      "page": 60,
+      "title": "Web Agents: Search and Retrieval",
+      "hasContent": true
+    },
+    {
+      "page": 61,
+      "title": "Web Agents: Self-Evolving Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 62,
+      "title": "Web Agents: Feedback and Reflection",
+      "hasContent": true
+    },
+    {
+      "page": 63,
+      "title": "Web Agents: Collective Multi-Agent Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 64,
+      "title": "Benchmarks Introduction",
+      "hasContent": true
+    },
+    {
+      "page": 65,
+      "title": "Tool Use Benchmarks (Figure 12)",
+      "hasContent": true
+    },
+    {
+      "page": 66,
+      "title": "Search Benchmarks",
+      "hasContent": true
+    },
+    {
+      "page": 67,
+      "title": "Memory and Planning Benchmarks",
+      "hasContent": true
+    },
+    {
+      "page": 68,
+      "title": "Planning and Feedback Benchmarks",
+      "hasContent": true
+    },
+    {
+      "page": 69,
+      "title": "Multi-Agent System Benchmarks",
+      "hasContent": true
+    },
+    {
+      "page": 70,
+      "title": "Language and Application Benchmarks",
+      "hasContent": true
+    },
+    {
+      "page": 71,
+      "title": "Scientific Discovery and Research Agent Benchmarks",
+      "hasContent": true
+    },
+    {
+      "page": 72,
+      "title": "Medical, Clinical, and Web Agent Benchmarks",
+      "hasContent": true
+    },
+    {
+      "page": 73,
+      "title": "Open Problems in Agentic Reasoning",
+      "hasContent": true
+    },
+    {
+      "page": 74,
+      "title": "Long-Horizon and World Model Challenges",
+      "hasContent": true
+    },
+    {
+      "page": 75,
+      "title": "References (Part 1)",
+      "hasContent": true
+    },
+    {
+      "page": 76,
+      "title": "References (Part 2)",
+      "hasContent": true
+    },
+    {
+      "page": 77,
+      "title": "References (Part 3)",
+      "hasContent": true
+    },
+    {
+      "page": 78,
+      "title": "References (Part 4)",
+      "hasContent": true
+    },
+    {
+      "page": 79,
+      "title": "References (Part 5)",
+      "hasContent": true
+    },
+    {
+      "page": 80,
+      "title": "References (Part 6)",
+      "hasContent": true
+    },
+    {
+      "page": 81,
+      "title": "References (Part 7)",
+      "hasContent": true
+    },
+    {
+      "page": 82,
+      "title": "References (Part 8)",
+      "hasContent": true
+    },
+    {
+      "page": 83,
+      "title": "References (Part 9)",
+      "hasContent": true
+    },
+    {
+      "page": 84,
+      "title": "References (Part 10)",
+      "hasContent": true
+    },
+    {
+      "page": 85,
+      "title": "References (Part 11)",
+      "hasContent": true
+    },
+    {
+      "page": 86,
+      "title": "References (Part 12)",
+      "hasContent": true
+    },
+    {
+      "page": 87,
+      "title": "References (Part 13)",
+      "hasContent": true
+    },
+    {
+      "page": 88,
+      "title": "References (Part 14)",
+      "hasContent": true
+    },
+    {
+      "page": 89,
+      "title": "References (Part 15)",
+      "hasContent": true
+    },
+    {
+      "page": 90,
+      "title": "References (Part 16)",
+      "hasContent": true
+    },
+    {
+      "page": 91,
+      "title": "References (Part 17)",
+      "hasContent": true
+    },
+    {
+      "page": 92,
+      "title": "References (Part 18)",
+      "hasContent": true
+    },
+    {
+      "page": 93,
+      "title": "References (Part 19)",
+      "hasContent": true
+    },
+    {
+      "page": 94,
+      "title": "References (Part 20)",
+      "hasContent": true
+    },
+    {
+      "page": 95,
+      "title": "References (Part 21)",
+      "hasContent": true
+    },
+    {
+      "page": 96,
+      "title": "References (Part 22)",
+      "hasContent": true
+    },
+    {
+      "page": 97,
+      "title": "References (Part 23)",
+      "hasContent": true
+    },
+    {
+      "page": 98,
+      "title": "References (Part 24)",
+      "hasContent": true
+    },
+    {
+      "page": 99,
+      "title": "References (Part 25)",
+      "hasContent": true
+    },
+    {
+      "page": 100,
+      "title": "References (Part 26)",
+      "hasContent": true
+    }
+  ]
+}
