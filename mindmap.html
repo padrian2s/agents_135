@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindmap - Agentic Reasoning for LLMs</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/d3-interpolate-path@2.3.0/build/d3-interpolate-path.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Google Sans', 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #mindmap {
+            width: 100%;
+            height: 100%;
+        }
+
+        .node-group {
+            cursor: pointer;
+        }
+
+        .node-rect {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+            transition: filter 0.2s ease;
+        }
+
+        .node-group:hover .node-rect {
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
+        }
+
+        .node-text {
+            font-size: 14px;
+            font-weight: 500;
+            fill: #1a1a2e;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .toggle-circle {
+            fill: #e8eaed;
+            stroke: #dadce0;
+            stroke-width: 1;
+            cursor: pointer;
+            transition: fill 0.2s ease;
+        }
+
+        .toggle-circle:hover {
+            fill: #d2d5d9;
+        }
+
+        .toggle-text {
+            font-size: 12px;
+            font-weight: 600;
+            fill: #5f6368;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .link {
+            fill: none;
+            stroke: #c4cad4;
+            stroke-width: 2;
+            stroke-linecap: round;
+        }
+
+        /* Color classes for nodes - pale/pastel colors */
+        .node-root {
+            fill: #bfdbfe;
+        }
+
+        .node-level-1 {
+            fill: #ddd6fe;
+        }
+
+        .node-level-2 {
+            fill: #a7f3d0;
+        }
+
+        .node-level-3 {
+            fill: #fde68a;
+        }
+
+        /* Info Panel */
+        #info-panel {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            width: 360px;
+            max-height: calc(100vh - 48px);
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        #info-panel.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        #info-panel .panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        #info-panel .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+            line-height: 1.4;
+            flex: 1;
+            padding-right: 12px;
+        }
+
+        #info-panel .panel-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #f1f3f4;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5f6368;
+            font-size: 18px;
+            flex-shrink: 0;
+            transition: background 0.2s ease;
+        }
+
+        #info-panel .panel-close:hover {
+            background: #e8eaed;
+        }
+
+        #info-panel .panel-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        #info-panel .panel-badge.root {
+            background: #bfdbfe;
+            color: #1e40af;
+        }
+
+        #info-panel .panel-badge.level-1 {
+            background: #ddd6fe;
+            color: #5b21b6;
+        }
+
+        #info-panel .panel-badge.level-2 {
+            background: #a7f3d0;
+            color: #047857;
+        }
+
+        #info-panel .panel-badge.level-3 {
+            background: #fde68a;
+            color: #92400e;
+        }
+
+        #info-panel .panel-description {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #5f6368;
+            margin-bottom: 16px;
+        }
+
+        #info-panel .panel-pages {
+            font-size: 13px;
+            color: #2563eb;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: #eff6ff;
+            border-radius: 8px;
+        }
+
+        #info-panel .panel-pages a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        #info-panel .panel-pages a:hover {
+            text-decoration: underline;
+        }
+
+        #info-panel .panel-meta {
+            font-size: 12px;
+            color: #9aa0a6;
+            padding-top: 12px;
+            border-top: 1px solid #f1f3f4;
+        }
+
+        #info-panel .panel-meta span {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .node-rect.selected {
+            stroke: #1a73e8;
+            stroke-width: 3;
+        }
+
+        /* Back button */
+        #back-btn {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 10px 20px;
+            background: #f1f3f4;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #5f6368;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        #back-btn:hover {
+            background: #e8eaed;
+            color: #1a1a2e;
+        }
+
+        /* Legend */
+        #legend {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        #legend h4 {
+            margin-bottom: 10px;
+            color: #5f6368;
+            font-weight: 600;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        /* Controls */
+        #controls {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: #f1f3f4;
+            border-color: #c4c4c4;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" id="back-btn">
+        <span>&larr;</span> Back to Index
+    </a>
+
+    <!-- Info Panel -->
+    <div id="info-panel">
+        <div class="panel-header">
+            <div class="panel-title"></div>
+            <button class="panel-close">&times;</button>
+        </div>
+        <div class="panel-badge"></div>
+        <div class="panel-pages"></div>
+        <div class="panel-description"></div>
+        <div class="panel-meta"></div>
+    </div>
+
+    <!-- Legend -->
+    <div id="legend">
+        <h4>Depth Levels</h4>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #bfdbfe;"></div>
+            <span>Root</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ddd6fe;"></div>
+            <span>Main Section</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #a7f3d0;"></div>
+            <span>Subsection</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #fde68a;"></div>
+            <span>Topic</span>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div id="controls">
+        <button class="control-btn" onclick="expandAll()">Expand All</button>
+        <button class="control-btn" onclick="collapseAll()">Collapse All</button>
+        <button class="control-btn" onclick="resetZoom()">Reset View</button>
+    </div>
+
+    <svg id="mindmap"></svg>
+
+    <script>
+        // Mindmap data structure based on the paper
+        const data = {
+            name: "Agentic Reasoning for LLMs",
+            description: "A comprehensive survey on agentic reasoning for Large Language Models, exploring how LLMs transform from passive text generators into autonomous agents capable of planning, acting, and learning through continuous environmental interaction.",
+            pages: "1-135",
+            pageLink: "reader.html#page=1",
+            expanded: true,
+            children: [
+                {
+                    name: "Foundational Reasoning",
+                    description: "Core single-agent capabilities that establish the foundation of agentic reasoning, linking abstract deliberation with verifiable action through planning, tool use, and search.",
+                    pages: "10-19",
+                    pageLink: "reader.html#page=10",
+                    expanded: true,
+                    children: [
+                        {
+                            name: "Planning",
+                            description: "Enables agents to decompose problems, sequence decisions, and navigate complex environments with foresight. Includes both in-context and post-training approaches.",
+                            pages: "11-13",
+                            pageLink: "reader.html#page=11",
+                            expanded: true,
+                            children: [
+                                { name: "Chain-of-Thought (CoT)", description: "Prompting technique that elicits step-by-step reasoning before producing final answers.", pages: "11", pageLink: "reader.html#page=11" },
+                                { name: "Tree of Thoughts (ToT)", description: "Explores multiple reasoning paths simultaneously using search algorithms like BFS and DFS.", pages: "11", pageLink: "reader.html#page=11" },
+                                { name: "Graph of Thoughts (GoT)", description: "Extends ToT by allowing non-linear reasoning structures and backtracking.", pages: "11", pageLink: "reader.html#page=11" },
+                                { name: "ReWOO", description: "Reasoning WithOut Observation - plans all steps before execution to reduce token usage.", pages: "12", pageLink: "reader.html#page=12" }
+                            ]
+                        },
+                        {
+                            name: "Tool Use",
+                            description: "Agents invoke external systems or APIs to execute grounded operations, bridging the gap between reasoning and real-world action.",
+                            pages: "14-17",
+                            pageLink: "reader.html#page=14",
+                            expanded: false,
+                            children: [
+                                { name: "API Integration", description: "Connecting to external services like search engines, databases, and computational tools.", pages: "14", pageLink: "reader.html#page=14" },
+                                { name: "Code Execution", description: "Running code snippets to perform calculations or manipulate data.", pages: "15", pageLink: "reader.html#page=15" },
+                                { name: "Retrieval Systems", description: "Accessing knowledge bases and document stores for information gathering.", pages: "16", pageLink: "reader.html#page=16" },
+                                { name: "Orchestration", description: "Coordinating multiple tools in sequence or parallel for complex tasks.", pages: "17", pageLink: "reader.html#page=17" }
+                            ]
+                        },
+                        {
+                            name: "Search",
+                            description: "Retrieval and exploration mechanisms for decision support, including both knowledge retrieval and environment exploration.",
+                            pages: "18-19",
+                            pageLink: "reader.html#page=18",
+                            expanded: false,
+                            children: [
+                                { name: "Agentic RAG", description: "Retrieval-Augmented Generation with iterative query refinement and multi-hop reasoning.", pages: "18", pageLink: "reader.html#page=18" },
+                                { name: "Web Search", description: "Real-time information gathering from the internet for up-to-date knowledge.", pages: "18", pageLink: "reader.html#page=18" },
+                                { name: "Environment Exploration", description: "Active probing of the environment to gather observations and update beliefs.", pages: "19", pageLink: "reader.html#page=19" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "Self-Evolving Reasoning",
+                    description: "How agents refine their capabilities through feedback, memory, and adaptation in evolving settings, enabling continuous improvement.",
+                    pages: "20-29",
+                    pageLink: "reader.html#page=20",
+                    expanded: false,
+                    children: [
+                        {
+                            name: "Feedback Mechanisms",
+                            description: "Systems for agents to receive and process feedback to improve performance through reflection and critique.",
+                            pages: "21-23",
+                            pageLink: "reader.html#page=21",
+                            expanded: false,
+                            children: [
+                                { name: "Self-Critique", description: "Agent evaluates its own outputs and identifies areas for improvement.", pages: "21", pageLink: "reader.html#page=21" },
+                                { name: "Reflexion", description: "Generate-Critique-Revise loop that stores reflections in memory for future use.", pages: "21", pageLink: "reader.html#page=21" },
+                                { name: "External Feedback", description: "Feedback from environment, tools, or human evaluators to guide learning.", pages: "22", pageLink: "reader.html#page=22" },
+                                { name: "Parametric Adaptation", description: "Updating model parameters based on feedback through fine-tuning or RLHF.", pages: "22", pageLink: "reader.html#page=22" }
+                            ]
+                        },
+                        {
+                            name: "Memory Systems",
+                            description: "Persistent storage mechanisms that allow agents to accumulate and utilize experience over time.",
+                            pages: "24-27",
+                            pageLink: "reader.html#page=24",
+                            expanded: false,
+                            children: [
+                                { name: "Flat Memory", description: "Simple key-value stores for quick retrieval of past experiences.", pages: "24", pageLink: "reader.html#page=24" },
+                                { name: "Graph Memory", description: "Structured memory using knowledge graphs for relational reasoning.", pages: "25", pageLink: "reader.html#page=25" },
+                                { name: "Hierarchical Memory", description: "Multi-level memory with abstraction for efficient long-term storage.", pages: "25", pageLink: "reader.html#page=25" },
+                                { name: "Experience Memory", description: "Storing successful action sequences for future task completion.", pages: "26", pageLink: "reader.html#page=26" }
+                            ]
+                        },
+                        {
+                            name: "Evolving Capabilities",
+                            description: "Mechanisms for agents to expand their skills and adapt to new situations over time.",
+                            pages: "28-29",
+                            pageLink: "reader.html#page=28",
+                            expanded: false,
+                            children: [
+                                { name: "Skill Acquisition", description: "Learning new capabilities from experience and demonstrations.", pages: "28", pageLink: "reader.html#page=28" },
+                                { name: "Strategy Refinement", description: "Optimizing problem-solving approaches based on past performance.", pages: "28", pageLink: "reader.html#page=28" },
+                                { name: "Self-Evolving Search", description: "Improving search strategies through meta-learning and adaptation.", pages: "29", pageLink: "reader.html#page=29" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "Multi-Agent Reasoning",
+                    description: "Extends intelligence to collaborative scenarios where multiple agents coordinate roles, share knowledge, and pursue shared goals.",
+                    pages: "30-42",
+                    pageLink: "reader.html#page=30",
+                    expanded: false,
+                    children: [
+                        {
+                            name: "Role Taxonomy",
+                            description: "Classification of agent roles including generic roles (leader, worker, critic) and domain-specific specialists.",
+                            pages: "30-33",
+                            pageLink: "reader.html#page=30",
+                            expanded: false,
+                            children: [
+                                { name: "Generic Roles", description: "Leader, Worker, Critic, and other general-purpose agent types.", pages: "31", pageLink: "reader.html#page=31" },
+                                { name: "Domain Specialists", description: "Finance, Legal, Education, Healthcare specialists with domain expertise.", pages: "32-33", pageLink: "reader.html#page=32" }
+                            ]
+                        },
+                        {
+                            name: "Collaboration Patterns",
+                            description: "How multiple agents coordinate and communicate to solve problems collectively.",
+                            pages: "34-39",
+                            pageLink: "reader.html#page=34",
+                            expanded: false,
+                            children: [
+                                { name: "In-Context Collaboration", description: "Agents coordinate through shared context and message passing.", pages: "35", pageLink: "reader.html#page=35" },
+                                { name: "Post-Training Collaboration", description: "Agents trained together to develop cooperative behaviors.", pages: "36", pageLink: "reader.html#page=36" },
+                                { name: "Policy Optimization", description: "Learning optimal collaboration strategies through reinforcement learning.", pages: "37", pageLink: "reader.html#page=37" },
+                                { name: "Debate & Voting", description: "Agents argue positions and reach consensus through democratic processes.", pages: "38", pageLink: "reader.html#page=38" }
+                            ]
+                        },
+                        {
+                            name: "Multi-Agent Memory",
+                            description: "Shared and distributed memory systems for collective knowledge management.",
+                            pages: "40-42",
+                            pageLink: "reader.html#page=40",
+                            expanded: false,
+                            children: [
+                                { name: "Shared Memory", description: "Common knowledge base accessible by all agents in the system.", pages: "40", pageLink: "reader.html#page=40" },
+                                { name: "Memory Management", description: "Strategies for updating, consolidating, and retrieving shared memories.", pages: "41", pageLink: "reader.html#page=41" },
+                                { name: "Training Multi-Agent", description: "Methods for training agents to effectively utilize collective memory.", pages: "42", pageLink: "reader.html#page=42" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "Applications",
+                    description: "Real-world domains where agentic reasoning is applied, demonstrating practical impact across diverse fields.",
+                    pages: "43-63",
+                    pageLink: "reader.html#page=43",
+                    expanded: false,
+                    children: [
+                        {
+                            name: "Math & Code",
+                            description: "Agents for mathematical exploration and software development (vibe coding).",
+                            pages: "44-47",
+                            pageLink: "reader.html#page=44",
+                            expanded: false,
+                            children: [
+                                { name: "Math Exploration", description: "Theorem proving, problem solving, and mathematical discovery.", pages: "44", pageLink: "reader.html#page=44" },
+                                { name: "Vibe Coding", description: "AI-assisted code generation, debugging, and software development.", pages: "44", pageLink: "reader.html#page=44" },
+                                { name: "Code Search & Retrieval", description: "Finding relevant code snippets and documentation.", pages: "46", pageLink: "reader.html#page=46" }
+                            ]
+                        },
+                        {
+                            name: "Scientific Discovery",
+                            description: "Autonomous agents for scientific research, hypothesis generation, and experiment design.",
+                            pages: "48-51",
+                            pageLink: "reader.html#page=48",
+                            expanded: false,
+                            children: [
+                                { name: "Hypothesis Generation", description: "AI-driven scientific hypothesis formulation and testing.", pages: "48", pageLink: "reader.html#page=48" },
+                                { name: "Lab Automation", description: "Automated experiment design and execution in scientific labs.", pages: "49", pageLink: "reader.html#page=49" },
+                                { name: "Literature Analysis", description: "Processing and synthesizing scientific literature at scale.", pages: "50", pageLink: "reader.html#page=50" }
+                            ]
+                        },
+                        {
+                            name: "Embodied Agents",
+                            description: "Agents with physical presence in the world, reasoning about spatial relationships and physical interactions.",
+                            pages: "52-54",
+                            pageLink: "reader.html#page=52",
+                            expanded: false,
+                            children: [
+                                { name: "Spatial Reasoning", description: "Understanding and navigating physical environments.", pages: "52", pageLink: "reader.html#page=52" },
+                                { name: "Physical Interaction", description: "Manipulating objects and interacting with the physical world.", pages: "53", pageLink: "reader.html#page=53" }
+                            ]
+                        },
+                        {
+                            name: "Healthcare",
+                            description: "Medical diagnosis support, clinical decision making, and healthcare delivery optimization.",
+                            pages: "55-57",
+                            pageLink: "reader.html#page=55",
+                            expanded: false,
+                            children: [
+                                { name: "Diagnostic Support", description: "AI-assisted medical diagnosis and treatment planning.", pages: "55", pageLink: "reader.html#page=55" },
+                                { name: "Clinical Workflows", description: "Optimizing healthcare delivery and patient management.", pages: "56", pageLink: "reader.html#page=56" }
+                            ]
+                        },
+                        {
+                            name: "Web Agents",
+                            description: "Autonomous agents that navigate and interact with web interfaces to complete tasks.",
+                            pages: "58-63",
+                            pageLink: "reader.html#page=58",
+                            expanded: false,
+                            children: [
+                                { name: "Web Navigation", description: "Browsing websites and completing online tasks autonomously.", pages: "58-59", pageLink: "reader.html#page=58" },
+                                { name: "Form Filling", description: "Automated data entry and form completion.", pages: "60", pageLink: "reader.html#page=60" },
+                                { name: "Web Search", description: "Finding information across multiple web sources.", pages: "61", pageLink: "reader.html#page=61" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "Benchmarks & Challenges",
+                    description: "Evaluation methods, benchmark datasets, and open problems in the field of agentic reasoning.",
+                    pages: "64-74",
+                    pageLink: "reader.html#page=64",
+                    expanded: false,
+                    children: [
+                        {
+                            name: "Evaluation Benchmarks",
+                            description: "Datasets and metrics for measuring agentic reasoning capabilities.",
+                            pages: "64-72",
+                            pageLink: "reader.html#page=64",
+                            expanded: false,
+                            children: [
+                                { name: "Tool Use Benchmarks", description: "ToolBench, API-Bank, and other tool-use evaluation datasets.", pages: "65", pageLink: "reader.html#page=65" },
+                                { name: "Planning Benchmarks", description: "Evaluating planning and decomposition capabilities.", pages: "67-68", pageLink: "reader.html#page=67" },
+                                { name: "Multi-Agent Benchmarks", description: "Testing collaborative reasoning and coordination.", pages: "69", pageLink: "reader.html#page=69" },
+                                { name: "Domain Benchmarks", description: "Application-specific evaluation in science, medicine, web.", pages: "70-72", pageLink: "reader.html#page=70" }
+                            ]
+                        },
+                        {
+                            name: "Open Problems",
+                            description: "Unsolved challenges and future research directions in agentic reasoning.",
+                            pages: "73-74",
+                            pageLink: "reader.html#page=73",
+                            expanded: false,
+                            children: [
+                                { name: "Long-Horizon Planning", description: "Maintaining coherence over extended task sequences.", pages: "74", pageLink: "reader.html#page=74" },
+                                { name: "World Models", description: "Building accurate internal models of the environment.", pages: "74", pageLink: "reader.html#page=74" },
+                                { name: "Safety & Alignment", description: "Ensuring agentic systems remain safe and aligned with human values.", pages: "73", pageLink: "reader.html#page=73" }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // SVG setup
+        const svg = d3.select("#mindmap");
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        svg.attr("width", width).attr("height", height);
+
+        const g = svg.append("g");
+
+        // Zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.2, 3])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Initial transform to center
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width / 6, height / 2).scale(0.85));
+
+        // Node dimensions
+        const nodeHeight = 44;
+        const nodePadding = 24;
+        const levelGap = 200;
+        const verticalGap = 16;
+        const toggleRadius = 12;
+
+        // Calculate text width
+        function getTextWidth(text, fontSize = 14) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.font = `500 ${fontSize}px Google Sans, Segoe UI, Roboto, sans-serif`;
+            return context.measureText(text).width;
+        }
+
+        // Get node width based on text
+        function getNodeWidth(d) {
+            return getTextWidth(d.data.name) + nodePadding * 2;
+        }
+
+        // Get color class based on depth
+        function getColorClass(d) {
+            if (d.depth === 0) return "node-root";
+            if (d.depth === 1) return "node-level-1";
+            if (d.depth === 2) return "node-level-2";
+            return "node-level-3";
+        }
+
+        // Check if node has children
+        function hasChildren(d) {
+            return d.data.children && d.data.children.length > 0;
+        }
+
+        // Custom tree layout
+        function computeLayout(root) {
+            function computeSubtreeHeight(node) {
+                if (!node.children || node.children.length === 0) {
+                    node.subtreeHeight = nodeHeight;
+                    return node.subtreeHeight;
+                }
+
+                let totalHeight = 0;
+                node.children.forEach((child, i) => {
+                    totalHeight += computeSubtreeHeight(child);
+                    if (i < node.children.length - 1) {
+                        totalHeight += verticalGap;
+                    }
+                });
+                node.subtreeHeight = totalHeight;
+                return totalHeight;
+            }
+
+            computeSubtreeHeight(root);
+
+            function assignPositions(node, x, yStart) {
+                node.x = x;
+
+                if (!node.children || node.children.length === 0) {
+                    node.y = yStart + nodeHeight / 2;
+                    return;
+                }
+
+                let currentY = yStart;
+                node.children.forEach((child, i) => {
+                    assignPositions(child, x + getNodeWidth(node) + levelGap, currentY);
+                    currentY += child.subtreeHeight + verticalGap;
+                });
+
+                const firstChild = node.children[0];
+                const lastChild = node.children[node.children.length - 1];
+                node.y = (firstChild.y + lastChild.y) / 2;
+            }
+
+            assignPositions(root, 0, -root.subtreeHeight / 2);
+        }
+
+        // Build hierarchy with expanded state
+        function buildHierarchy(data) {
+            const root = d3.hierarchy(data, d => d.expanded !== false ? d.children : null);
+            computeLayout(root);
+            return root;
+        }
+
+        // Generate curved path
+        function generatePath(source, target) {
+            const sourceWidth = getNodeWidth(source);
+            const startX = source.x + sourceWidth + toggleRadius * 2 + 4;
+            const startY = source.y;
+            const endX = target.x;
+            const endY = target.y;
+
+            const midX = startX + (endX - startX) * 0.5;
+
+            return `M ${startX} ${startY}
+                    C ${midX} ${startY},
+                      ${midX} ${endY},
+                      ${endX} ${endY}`;
+        }
+
+        let previousPositions = new Map();
+        const duration = 500;
+
+        // Info panel elements
+        const infoPanel = document.getElementById('info-panel');
+        const panelTitle = infoPanel.querySelector('.panel-title');
+        const panelBadge = infoPanel.querySelector('.panel-badge');
+        const panelPages = infoPanel.querySelector('.panel-pages');
+        const panelDescription = infoPanel.querySelector('.panel-description');
+        const panelMeta = infoPanel.querySelector('.panel-meta');
+        const panelClose = infoPanel.querySelector('.panel-close');
+
+        let selectedNode = null;
+
+        function getLevelName(depth) {
+            if (depth === 0) return 'Root';
+            if (depth === 1) return 'Main Section';
+            if (depth === 2) return 'Subsection';
+            return 'Topic';
+        }
+
+        function getBadgeClass(depth) {
+            if (depth === 0) return 'root';
+            if (depth === 1) return 'level-1';
+            if (depth === 2) return 'level-2';
+            return 'level-3';
+        }
+
+        function showInfoPanel(d) {
+            if (selectedNode) {
+                g.selectAll('.node-rect').classed('selected', false);
+            }
+            selectedNode = d;
+
+            g.selectAll('.node-group')
+                .filter(node => node.data.name === d.data.name)
+                .select('.node-rect')
+                .classed('selected', true);
+
+            panelTitle.textContent = d.data.name;
+            panelBadge.textContent = getLevelName(d.depth);
+            panelBadge.className = 'panel-badge ' + getBadgeClass(d.depth);
+
+            if (d.data.pages && d.data.pageLink) {
+                panelPages.innerHTML = `<a href="${d.data.pageLink}">View in Reader (Pages ${d.data.pages})</a>`;
+                panelPages.style.display = 'block';
+            } else {
+                panelPages.style.display = 'none';
+            }
+
+            panelDescription.textContent = d.data.description || 'No description available.';
+
+            const childCount = d.data.children ? d.data.children.length : 0;
+            const path = d.ancestors().reverse().map(n => n.data.name).join(' > ');
+
+            panelMeta.innerHTML = `
+                <span><strong>Path:</strong> ${path}</span>
+                <span><strong>Depth:</strong> Level ${d.depth}</span>
+                ${childCount > 0 ? `<span><strong>Children:</strong> ${childCount} items</span>` : ''}
+            `;
+
+            infoPanel.classList.add('visible');
+        }
+
+        function hideInfoPanel() {
+            infoPanel.classList.remove('visible');
+            if (selectedNode) {
+                g.selectAll('.node-rect').classed('selected', false);
+                selectedNode = null;
+            }
+        }
+
+        panelClose.addEventListener('click', hideInfoPanel);
+
+        function onNodeClick(event, d) {
+            event.stopPropagation();
+            showInfoPanel(d);
+        }
+
+        svg.on('click', function(event) {
+            if (event.target === this) {
+                hideInfoPanel();
+            }
+        });
+
+        function toggleNode(event, d) {
+            event.stopPropagation();
+            if (hasChildren(d)) {
+                toggleSource = d;
+                d.data.expanded = d.data.expanded === false ? true : false;
+                update(d);
+            }
+        }
+
+        function generateCollapsedPath(source) {
+            const sourceWidth = getNodeWidth(source);
+            const x = source.x + sourceWidth + toggleRadius * 2 + 4;
+            const y = source.y;
+            return `M ${x} ${y} C ${x} ${y}, ${x} ${y}, ${x} ${y}`;
+        }
+
+        function update(toggledNode = null) {
+            const root = buildHierarchy(data);
+            const nodes = root.descendants();
+            const links = root.links();
+
+            const nodeMap = new Map();
+            nodes.forEach(d => {
+                nodeMap.set(d.data.name, d);
+            });
+
+            function getSourcePosition(d) {
+                if (toggledNode) {
+                    return { x: toggledNode.x, y: toggledNode.y };
+                }
+                if (d.parent) {
+                    const parentKey = d.parent.ancestors().map(n => n.data.name).join('/');
+                    const parentPos = previousPositions.get(parentKey);
+                    if (parentPos) return parentPos;
+                    return { x: d.parent.x, y: d.parent.y };
+                }
+                return { x: d.x, y: d.y };
+            }
+
+            function getCollapsePosition(d) {
+                const sourceNode = nodeMap.get(d.source.data.name);
+                if (sourceNode) {
+                    return sourceNode;
+                }
+                if (toggledNode) {
+                    return toggledNode;
+                }
+                const prevPos = previousPositions.get(d.source.data.name);
+                if (prevPos) {
+                    return { x: prevPos.x, y: prevPos.y, data: d.source.data };
+                }
+                return d.source;
+            }
+
+            const easing = d3.easeCubicInOut;
+
+            function getLinkKey(d) {
+                const sourcePath = d.source.ancestors().map(n => n.data.name).join('/');
+                const targetPath = d.target.ancestors().map(n => n.data.name).join('/');
+                return sourcePath + '->' + targetPath;
+            }
+
+            g.selectAll(".link").interrupt();
+            g.selectAll(".node-group").interrupt();
+
+            const link = g.selectAll(".link")
+                .data(links, getLinkKey);
+
+            link.exit()
+                .each(function(d) {
+                    d.collapseTarget = getCollapsePosition(d);
+                })
+                .transition()
+                .duration(duration)
+                .ease(easing)
+                .attr("d", function(d) {
+                    const target = d.collapseTarget;
+                    const sourceWidth = getTextWidth(target.data.name) + nodePadding * 2;
+                    const x = target.x + sourceWidth + toggleRadius * 2 + 4;
+                    const y = target.y;
+                    return `M ${x} ${y} C ${x} ${y}, ${x} ${y}, ${x} ${y}`;
+                })
+                .attr("opacity", 0)
+                .remove();
+
+            const linkEnter = link.enter()
+                .append("path")
+                .attr("class", "link")
+                .attr("opacity", 0)
+                .attr("d", d => generateCollapsedPath(d.source));
+
+            link.merge(linkEnter)
+                .transition()
+                .duration(duration)
+                .ease(easing)
+                .attr("d", d => generatePath(d.source, d.target))
+                .attr("opacity", 1);
+
+            function getNodeKey(d) {
+                return d.ancestors().map(n => n.data.name).join('/');
+            }
+
+            const node = g.selectAll(".node-group")
+                .data(nodes, getNodeKey);
+
+            node.exit()
+                .each(function(d) {
+                    d.sourcePosition = getSourcePosition(d);
+                })
+                .transition()
+                .duration(duration)
+                .ease(easing)
+                .attr("transform", d => `translate(${d.sourcePosition.x}, ${d.sourcePosition.y})`)
+                .attr("opacity", 0)
+                .on("end", function() {
+                    d3.select(this).remove();
+                });
+
+            const nodeEnter = node.enter()
+                .append("g")
+                .attr("class", "node-group")
+                .attr("opacity", 0)
+                .attr("transform", d => {
+                    const source = getSourcePosition(d);
+                    return `translate(${source.x}, ${source.y})`;
+                });
+
+            nodeEnter.append("rect")
+                .attr("class", d => `node-rect ${getColorClass(d)}`)
+                .attr("x", 0)
+                .attr("y", -nodeHeight / 2)
+                .attr("width", d => getNodeWidth(d))
+                .attr("height", nodeHeight)
+                .attr("rx", 22)
+                .attr("ry", 22)
+                .on("click", onNodeClick);
+
+            nodeEnter.append("text")
+                .attr("class", "node-text")
+                .attr("x", d => getNodeWidth(d) / 2)
+                .attr("y", 0)
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "middle")
+                .text(d => d.data.name);
+
+            const toggleGroup = nodeEnter.filter(d => hasChildren(d))
+                .append("g")
+                .attr("class", "toggle-group")
+                .attr("transform", d => `translate(${getNodeWidth(d) + toggleRadius + 4}, 0)`)
+                .on("click", toggleNode);
+
+            toggleGroup.append("circle")
+                .attr("class", "toggle-circle")
+                .attr("r", toggleRadius);
+
+            toggleGroup.append("text")
+                .attr("class", "toggle-text")
+                .attr("text-anchor", "middle")
+                .attr("dy", "0.35em")
+                .text(d => d.data.expanded === false ? "+" : "-");
+
+            const nodeUpdate = node.merge(nodeEnter);
+
+            nodeUpdate.transition()
+                .duration(duration)
+                .ease(easing)
+                .attr("opacity", 1)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+            nodeUpdate.select(".toggle-text")
+                .text(d => d.data.expanded === false ? "+" : "-");
+
+            nodeUpdate.select(".node-rect")
+                .attr("class", d => `node-rect ${getColorClass(d)}`);
+
+            previousPositions = new Map();
+            nodes.forEach(d => {
+                const key = d.ancestors().map(n => n.data.name).join('/');
+                previousPositions.set(key, { x: d.x, y: d.y, name: d.data.name });
+            });
+        }
+
+        // Control functions
+        function expandAll() {
+            function expand(node) {
+                node.expanded = true;
+                if (node.children) {
+                    node.children.forEach(expand);
+                }
+            }
+            expand(data);
+            update();
+        }
+
+        function collapseAll() {
+            function collapse(node) {
+                if (node.children) {
+                    node.expanded = false;
+                    node.children.forEach(collapse);
+                }
+            }
+            data.children.forEach(collapse);
+            data.expanded = true;
+            update();
+        }
+
+        function resetZoom() {
+            svg.transition()
+                .duration(500)
+                .call(zoom.transform, d3.zoomIdentity.translate(width / 6, height / 2).scale(0.85));
+        }
+
+        // Initial render
+        update();
+
+        // Handle window resize
+        window.addEventListener("resize", () => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            svg.attr("width", newWidth).attr("height", newHeight);
+        });
+    </script>
+</body>
+</html>
